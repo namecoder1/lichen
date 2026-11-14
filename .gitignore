@@ -10,3 +10,4 @@ sparkle-private*.txt
 *.cer
 *.key
 .env
+.vscode/

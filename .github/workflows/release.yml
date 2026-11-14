@@ -1,5 +1,7 @@
 # Pubblica una release quando fai push di un tag vX.Y.Z:
 #   git tag v0.1.0 && git push origin v0.1.0
+# Un tag con trattino (v0.4.0-rc.1) crea una pre-release di prova: niente tap, e Sparkle
+# non la vede (latest/download punta sempre all'ultima release stabile).
 #
 # Secrets opzionali (Settings → Secrets and variables → Actions):
 #   firma + notarizzazione: MACOS_CERT_P12 (base64 del .p12 Developer ID), MACOS_CERT_PASSWORD,
@@ -59,10 +61,11 @@ jobs:
         run: |
           FILES=(dist/*.zip)
           [[ -f dist/appcast.xml ]] && FILES+=(dist/appcast.xml)
-          gh release create "$GITHUB_REF_NAME" "${FILES[@]}" --title "$GITHUB_REF_NAME" --generate-notes
+          PRE=(); [[ "$GITHUB_REF_NAME" == *-* ]] && PRE=(--prerelease)
+          gh release create "$GITHUB_REF_NAME" "${FILES[@]}" --title "$GITHUB_REF_NAME" --generate-notes "${PRE[@]}"
 
       - name: Aggiorna il tap Homebrew
-        if: env.HOMEBREW_TAP_TOKEN != ''
+        if: env.HOMEBREW_TAP_TOKEN != '' && !contains(github.ref_name, '-')
         run: |
           source scripts/config.sh
           VERSION="${GITHUB_REF_NAME#v}"
@@ -75,4 +78,4 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add "Casks/$CASK.rb"
           git commit -m "$CASK $VERSION"
-          git push
+          git push origin HEAD:main
