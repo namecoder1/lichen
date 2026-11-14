@@ -1,0 +1,12 @@
+.build/
+.swiftpm/
+*.xcodeproj
+.DS_Store
+dist/
+
+# segreti e chiavi: mai nel repo
+sparkle-private*.txt
+*.p12
+*.cer
+*.key
+.env

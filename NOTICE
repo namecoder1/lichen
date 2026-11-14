@@ -1,0 +1,21 @@
+Lichen
+Copyright (C) 2026 Lichen contributors
+Licensed under the GNU General Public License v3.0 or later (see LICENSE).
+
+Resources/themes/deskland/ contains the Beach (flat.html) and Meadow (meadow.html)
+themes, their scripts and image assets from Deskland Preview; Resources/thumbs/beach.webp and
+Resources/thumbs/meadow.webp are Deskland's theme thumbnails
+(https://github.com/BLEZZ0102/Deskland, commit listed in UPSTREAM_COMMIT),
+Copyright (C) 2026 Deskland authors, licensed under GPL-3.0. They are included
+unmodified; Lichen provides a macOS host that speaks the same page protocol.
+
+The field technique in Resources/themes/lichen/core.js follows Deskland's approach.
+
+Lichen is an independent project. It is not affiliated with, endorsed by or an
+official release of Deskland. The Deskland name, logo and icon are trademarks of
+their owners and are not licensed by GPL-3.0 (see Resources/themes/deskland/TRADEMARKS.md).
+
+---
+
+Lichen è un progetto indipendente, non affiliato né approvato da Deskland.
+I temi Spiaggia e Prato provengono da Deskland Preview (GPL-3.0) e sono inclusi senza modifiche.
