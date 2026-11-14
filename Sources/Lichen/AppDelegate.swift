@@ -236,10 +236,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, AppActions {
 
     /// Ricarica solo le finestre il cui tema è cambiato.
     private func reloadChangedWindows() {
+        var changed = false
         for w in windows {
             let t = theme(for: w.targetScreen)
-            if t.id != w.theme.id { w.load(t, settings: ThemeSettingsStore.values(for: t)) }
+            guard t.id != w.theme.id else { continue }
+            // prima la qualità del tema nuovo, così la pagina nasce già alla risoluzione giusta
+            w.setQuality(QualityPolicy.decide(mode: model.qualityMode, backingScale: w.targetScreen.backingScaleFactor,
+                                              heavy: t.heavy).quality)
+            w.load(t, settings: ThemeSettingsStore.values(for: t))
+            changed = true
         }
+        if changed { applyQuality() }       // i temi pesanti disegnano a risoluzione più bassa
     }
 
     // MARK: AppActions
@@ -530,7 +537,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, AppActions {
 
     private func decision(for screen: NSScreen) -> QualityPolicy.Decision {
         if let id = screen.displayID, let d = decisions[id] { return d }
-        return QualityPolicy.decide(mode: model.qualityMode, backingScale: screen.backingScaleFactor)
+        return QualityPolicy.decide(mode: model.qualityMode, backingScale: screen.backingScaleFactor,
+                                    heavy: theme(for: screen).heavy)
     }
 
     /// Risoluzione e fps per ogni schermo; in automatico segue batteria, Risparmio energetico, temperatura.
@@ -539,7 +547,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, AppActions {
         var reason = ""
         decisions = [:]
         for w in windows {
-            let d = QualityPolicy.decide(mode: model.qualityMode, backingScale: w.targetScreen.backingScaleFactor)
+            let d = QualityPolicy.decide(mode: model.qualityMode, backingScale: w.targetScreen.backingScaleFactor,
+                                         heavy: w.theme.heavy)
             if let id = w.displayID { decisions[id] = d }
             if d.quality != w.themeView.quality { NSLog("[lichen] qualità %@ → %.2fx %d fps", d.reason, d.quality.scale, d.quality.fps) }
             w.setQuality(d.quality)

@@ -6,8 +6,13 @@ Resources/themes/deskland/ contains the Beach (flat.html) and Meadow (meadow.htm
 themes, their scripts and image assets from Deskland Preview; Resources/thumbs/beach.webp and
 Resources/thumbs/meadow.webp are Deskland's theme thumbnails
 (https://github.com/BLEZZ0102/Deskland, commit listed in UPSTREAM_COMMIT),
-Copyright (C) 2026 Deskland authors, licensed under GPL-3.0. They are included
+Copyright (C) 2026 Deskland authors, licensed under GPL-3.0. The files in that folder are
 unmodified; Lichen provides a macOS host that speaks the same page protocol.
+
+Resources/themes/patches/ contains Lichen's modifications to those themes, applied by the
+host at runtime (for example beach.js, which keeps palm trees in place when an icon moves).
+They are derived from Deskland Preview and licensed under GPL-3.0. The host also limits the
+frame rate and resolution at which these pages render.
 
 The field technique in Resources/themes/lichen/core.js follows Deskland's approach.
 
@@ -18,4 +23,5 @@ their owners and are not licensed by GPL-3.0 (see Resources/themes/deskland/TRAD
 ---
 
 Lichen è un progetto indipendente, non affiliato né approvato da Deskland.
-I temi Spiaggia e Prato provengono da Deskland Preview (GPL-3.0) e sono inclusi senza modifiche.
+I temi Spiaggia e Prato provengono da Deskland Preview (GPL-3.0). I file originali sono inclusi
+senza modifiche; le correzioni di Lichen stanno in Resources/themes/patches/ (GPL-3.0).

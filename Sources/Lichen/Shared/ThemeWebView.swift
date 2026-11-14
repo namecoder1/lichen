@@ -23,6 +23,8 @@ final class ThemeWebView: NSView {
     /// di sistema (prima era un elemento della pagina e costringeva WebKit a ricomporla a ogni fotogramma).
     private let tintView = NSView()
     private var pendingRipple: (CGPoint, Date)?
+    private var themeID: String
+    private let capture: Bool
     var paused = false { didSet { if paused != oldValue { sendPause() } } }
     var onLog: ((String) -> Void)?
 
@@ -37,6 +39,30 @@ final class ThemeWebView: NSView {
           try { Object.defineProperty(window, 'devicePixelRatio', { get: () => dpr, configurable: true }); } catch (e) {}
           window.__lichenFPS = \(fps);
           window.__lichenSetQuality = (s, f) => { dpr = s; window.__lichenFPS = f; dispatchEvent(new Event('resize')); };
+          // Le pagine di Deskland chiedono un fotogramma a ogni refresh dello schermo (fino a 120 Hz) e
+          // si limitano da sole solo a 30 fps: qui requestAnimationFrame rispetta gli fps scelti dall'host
+          // e, a pagina in pausa, si sveglia 4 volte al secondo. Un timer invece del rAF a vuoto: tra un
+          // fotogramma e l'altro la pagina dorme davvero. I temi Lichen gestiscono già il proprio ritmo.
+          const nativeRAF = window.requestAnimationFrame.bind(window);
+          const nativeCancel = window.cancelAnimationFrame.bind(window);
+          let rafQueue = new Map(), rafNext = 1, rafTimer = 0, rafLast = 0, idle = false;
+          const flush = t => {
+            rafTimer = 0; rafLast = performance.now();
+            const q = rafQueue; rafQueue = new Map();
+            q.forEach(fn => { try { fn(t); } catch (e) { setTimeout(() => { throw e; }); } });
+          };
+          window.requestAnimationFrame = fn => {
+            if (window.Lichen) return nativeRAF(fn);
+            const id = rafNext++;
+            rafQueue.set(id, fn);
+            if (!rafTimer) {
+              const interval = idle ? 250 : 1000 / (window.__lichenFPS || 30);
+              const wait = Math.max(0, interval - (performance.now() - rafLast) - 4);
+              rafTimer = setTimeout(() => nativeRAF(flush), wait);
+            }
+            return -id;
+          };
+          window.cancelAnimationFrame = id => { if (id < 0) rafQueue.delete(-id); else nativeCancel(id); };
           const listeners = [];
           const host = window.webkit.messageHandlers.lichen;
           window.chrome = window.chrome || {};
@@ -51,7 +77,7 @@ final class ThemeWebView: NSView {
           addEventListener('unhandledrejection', e => log('promise:', e.reason));
           // sonda: segnala i fotogrammi bloccati (pagina non in pausa) per trovare gli scatti
           let lastF = 0, hidden = false;
-          window.__lichenProbe = on => { hidden = !on; lastF = 0; };
+          window.__lichenProbe = on => { hidden = !on; idle = !on; lastF = 0; };
           const probe = t => {
             if (!hidden && lastF && t - lastF > 250) log('scatto', Math.round(t - lastF) + 'ms');
             lastF = t; requestAnimationFrame(probe);
@@ -82,14 +108,10 @@ final class ThemeWebView: NSView {
         self.settings = settings
         self.demo = demo
         self.quality = quality
+        self.themeID = theme.id
         let config = WKWebViewConfiguration()
         config.setURLSchemeHandler(ThemeSchemeHandler(), forURLScheme: ThemeSchemeHandler.scheme)
-        config.userContentController.addUserScript(WKUserScript(source: Self.shim(scale: quality.scale, fps: quality.fps),
-                                                                injectionTime: .atDocumentStart, forMainFrameOnly: true))
-        if capture {
-            config.userContentController.addUserScript(WKUserScript(source: Self.capturePatch,
-                                                                    injectionTime: .atDocumentStart, forMainFrameOnly: true))
-        }
+        self.capture = capture
         config.suppressesIncrementalRendering = true
         // Mission Control, Exposé, Launchpad coprono per un attimo la finestra: senza questo WebKit
         // la considera nascosta e sospende l'animazione finché non torna visibile.
@@ -102,7 +124,6 @@ final class ThemeWebView: NSView {
         tintView.frame = bounds
         tintView.autoresizingMask = [.width, .height]
         tintView.wantsLayer = true
-        tintView.layer?.compositingFilter = CIFilter(name: "CIMultiplyBlendMode")
         tintView.isHidden = true
         addSubview(tintView)
         config.userContentController.add(WeakMessageHandler(self), name: "lichen")
@@ -116,14 +137,29 @@ final class ThemeWebView: NSView {
 
     required init?(coder: NSCoder) { fatalError() }
 
+    /// Lo shim nasce con la qualità attuale: una pagina nuova (cambio tema, ricarica) parte già
+    /// alla risoluzione giusta invece di quella con cui era stata creata la vista.
+    private func installScripts() {
+        let ucc = web.configuration.userContentController
+        ucc.removeAllUserScripts()
+        ucc.addUserScript(WKUserScript(source: Self.shim(scale: quality.scale, fps: quality.fps),
+                                       injectionTime: .atDocumentStart, forMainFrameOnly: true))
+        if capture {
+            ucc.addUserScript(WKUserScript(source: Self.capturePatch, injectionTime: .atDocumentStart, forMainFrameOnly: true))
+        }
+    }
+
     func load(_ theme: ThemeInfo, settings: [String: Double] = [:]) {
         self.settings = settings
+        themeID = theme.id
         ready = false
+        installScripts()
         web.load(URLRequest(url: ThemeCatalog.url(for: theme, demo: demo)))
     }
 
     func reload() {
         ready = false
+        installScripts()
         web.reload()
     }
 
@@ -156,18 +192,31 @@ final class ThemeWebView: NSView {
     }
 
     /// Velo della luce del giorno; `seconds` = durata della transizione (animata da Core Animation).
+    /// Il velo ideale moltiplica la pagina per m = (1 - a) + a·colore. Un filtro "moltiplica" sopra una
+    /// pagina animata però obbliga il sistema a ricomporre tutto lo schermo con Core Image a ogni
+    /// fotogramma (circa +12% di GPU su un M3 Pro). Qui lo stesso effetto è approssimato con una
+    /// velatura normale (costo quasi nullo): scurisce quanto la media di m e aggiunge la tinta che
+    /// riproduce m esattamente sui toni medi.
+    static func overlayColor(for tint: LightTint) -> CGColor {
+        let a = tint.alpha
+        let m = tint.rgb.map { 1 - a + a * $0 }
+        let alpha = max(0, 1 - m.reduce(0, +) / Double(m.count))
+        guard alpha > 0.001 else { return CGColor(srgbRed: 0, green: 0, blue: 0, alpha: 0) }
+        let g = 0.5
+        let c = m.map { min(1, max(0, g * ($0 - (1 - alpha)) / alpha)) }
+        return CGColor(srgbRed: c[0], green: c[1], blue: c[2], alpha: alpha)
+    }
+
     func setLight(_ tint: LightTint, seconds: Double = 60) {
         guard tint != light, let layer = tintView.layer else { return }
         light = tint
-        let c = tint.rgb.map { CGFloat($0) }, a = CGFloat(tint.alpha)
-        // moltiplicare per (1 - a) + a·colore = colore del velo a piena opacità
-        let color = CGColor(srgbRed: 1 - a + a * c[0], green: 1 - a + a * c[1], blue: 1 - a + a * c[2], alpha: 1)
+        let color = Self.overlayColor(for: tint)
         if tint.alpha <= 0.005 {
             tintView.isHidden = true
             layer.backgroundColor = color
             return
         }
-        let from = tintView.isHidden ? CGColor(srgbRed: 1, green: 1, blue: 1, alpha: 1) : (layer.presentation()?.backgroundColor ?? layer.backgroundColor)
+        let from = tintView.isHidden ? CGColor(srgbRed: 0, green: 0, blue: 0, alpha: 0) : (layer.presentation()?.backgroundColor ?? layer.backgroundColor)
         tintView.isHidden = false
         if seconds > 0 {
             let anim = CABasicAnimation(keyPath: "backgroundColor")
@@ -209,6 +258,10 @@ final class ThemeWebView: NSView {
         }
         guard (body as? String) == "ready" else { return }
         ready = true
+        // correzioni di Lichen ai temi di Deskland (Resources/themes/patches/<id>.js), prima delle icone
+        if let patch = try? String(contentsOf: ThemeCatalog.root.appendingPathComponent("patches/\(themeID).js"), encoding: .utf8) {
+            web.evaluateJavaScript(patch)
+        }
         sendSettings()
         sendIcons()
         sendPause()

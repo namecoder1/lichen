@@ -31,12 +31,15 @@ final class SnapshotDelegate: NSObject, NSApplicationDelegate {
         guard !queue.isEmpty, let screen = NSScreen.screens.first else { exit(0) }
         let theme = queue.removeFirst()
         let w = DesktopWindow(screen: screen, theme: theme, seed: Int.random(in: 1..<1_000_000),
-                              quality: RenderQuality(scale: screen.backingScaleFactor, fps: 30), demo: demo)
+                              quality: Self.envQuality(screen), demo: demo)
         w.orderFront(nil)
         if !demo { w.updateIcons(IconReader.readIconRects()) }
         current = w
         // LIGHT=<altezza del sole>: prova del velo della luce, stampa il numero della finestra per la cattura
-        if let e = ProcessInfo.processInfo.environment["LIGHT"].flatMap(Double.init) {
+        // HOLD=1: resta aperto senza velo (per misurare)
+        let env = ProcessInfo.processInfo.environment
+        if env["HOLD"] != nil { w.level = .floating; return }
+        if let e = env["LIGHT"].flatMap(Double.init) {
             w.level = .floating
             w.themeView.setLight(SunLight.tint(elevation: e), seconds: 0)
             DispatchQueue.main.asyncAfter(deadline: .now() + 4) { print("finestra:", w.windowNumber); fflush(stdout) }
@@ -59,6 +62,13 @@ final class SnapshotDelegate: NSObject, NSApplicationDelegate {
                 self.next()
             }
         }
+    }
+
+    /// SCALE=<x> FPS=<n>: qualità di prova (predefinita: risoluzione dello schermo, 30 fps).
+    static func envQuality(_ screen: NSScreen) -> RenderQuality {
+        let env = ProcessInfo.processInfo.environment
+        return RenderQuality(scale: env["SCALE"].flatMap(Double.init).map { CGFloat($0) } ?? screen.backingScaleFactor,
+                             fps: env["FPS"].flatMap(Int.init) ?? 30)
     }
 
     /// Ritaglio 16:10 attorno alla colonna di icone a destra, 480×300.

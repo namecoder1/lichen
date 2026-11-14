@@ -43,10 +43,16 @@ enum QualityPolicy {
         var reason: String
     }
 
-    static func decide(mode: QualityMode, backingScale: CGFloat) -> Decision {
-        let high = RenderQuality(scale: backingScale, fps: 30)
-        let balanced = RenderQuality(scale: min(backingScale, SystemInfo.isIntel ? 1 : 1.5), fps: 30)
-        let saver = RenderQuality(scale: 1, fps: 20)
+    /// `heavy`: tema che ridisegna tutto lo schermo a ogni fotogramma (acqua, nuvole). A piena risoluzione
+    /// Retina costa metà della GPU di un M3 Pro: si disegna a meno pixel (l'immagine è morbida e regge
+    /// bene l'ingrandimento) e a meno fotogrammi. I pixel crescono col quadrato della scala.
+    static func decide(mode: QualityMode, backingScale: CGFloat, heavy: Bool = false) -> Decision {
+        let high = heavy ? RenderQuality(scale: min(backingScale, 1.25), fps: 30)
+                         : RenderQuality(scale: backingScale, fps: 30)
+        let balanced = heavy ? RenderQuality(scale: min(backingScale, 1), fps: 24)
+                             : RenderQuality(scale: min(backingScale, SystemInfo.isIntel ? 1 : 1.5), fps: 30)
+        let saver = heavy ? RenderQuality(scale: min(backingScale, 0.75), fps: 20)
+                          : RenderQuality(scale: 1, fps: 20)
         switch mode {
         case .high: return .init(quality: high, pause: false, reason: "Massima")
         case .balanced: return .init(quality: balanced, pause: false, reason: "Bilanciata")
@@ -65,6 +71,7 @@ enum QualityPolicy {
                                       : .init(quality: balanced, pause: false, reason: "Bilanciata: a batteria")
         }
         if SystemInfo.isIntel { return .init(quality: balanced, pause: false, reason: "Bilanciata: Mac Intel") }
+        if heavy { return .init(quality: balanced, pause: false, reason: "Bilanciata: tema animato") }
         return .init(quality: high, pause: false, reason: "Massima")
     }
 }
