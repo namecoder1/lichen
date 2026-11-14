@@ -1,0 +1,97 @@
+<!doctype html>
+<!-- Lichen · Pixel RPG — Copyright (C) 2026 Lichen contributors — GPL-3.0-or-later -->
+<html lang="it"><head><meta charset="utf-8"><title>Lichen · Pixel RPG</title></head>
+<body>
+<script src="core.js"></script>
+<script>
+'use strict';
+const COMMON = `
+const float PX = 4.0;           // un "pixel" della grafica = 4 punti dello schermo
+// matrice di Bayer 4×4 per il dithering tra le fasce
+float bayer(vec2 c) {
+  vec2 m = mod(c, 4.0);
+  int i = int(m.x) + int(m.y) * 4;
+  int b[16] = int[16](0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5);
+  return (float(b[i]) + 0.5) / 16.0;
+}
+const vec3 DEEP = vec3(0.16, 0.30, 0.62), SEA = vec3(0.22, 0.47, 0.80), SHALLOW = vec3(0.36, 0.68, 0.90);
+const vec3 FOAM = vec3(0.86, 0.95, 0.98), SAND = vec3(0.95, 0.86, 0.58), SAND2 = vec3(0.85, 0.72, 0.45);
+const vec3 GRASS = vec3(0.42, 0.75, 0.30), GRASS2 = vec3(0.30, 0.60, 0.24), FOREST = vec3(0.16, 0.42, 0.20);
+`;
+
+Lichen.start({
+  background: '#3878cc',
+  sigma: 52, warp: 40, coast: 1.0,
+  animated: true,
+  params: { trees: { def: 0.38 }, clouds: { def: 1 } },
+  extraRects(api) {
+    return api.scatter(1, 4, { fromIcons: 280, apart: 320 })
+      .map(o => ({ cx: o.x, cy: o.y, hw: 6 + o.r * 16, hh: 6 + o.r * 12 }));
+  },
+
+  staticFragment: COMMON + `
+void main() {
+  vec2 p = cssPos();
+  vec2 c = floor(p / PX);                // coordinate del pixel grande
+  vec2 q = (c + 0.5) * PX;
+  float s = fieldS(q) + (tex(q, 120.0).r - 0.5) * 10.0;
+  float d = (bayer(c) - 0.5) * 6.0;      // dithering sui confini
+  float sd = s + d;
+  vec3 col; float water = 0.0;
+
+  if (sd > 70.0) { col = DEEP; water = 1.0; }
+  else if (sd > 26.0) { col = SEA; water = 1.0; }
+  else if (sd > 8.0) { col = SHALLOW; water = 1.0; }
+  else if (sd > 4.0) { col = FOAM; water = 1.0; }
+  else if (sd > -6.0) { col = (hash12(c) > 0.85) ? SAND2 : SAND; }
+  else if (sd > -40.0) { col = GRASS; }
+  else { col = (bayer(c * 0.5) > 0.5) ? GRASS2 : GRASS; }
+
+  // erba: ciuffi e fiori a pixel singoli
+  if (sd < -6.0) {
+    float h = hash12(c + uSeed);
+    if (h > 0.97) col = GRASS2;
+    else if (h > 0.962) col = vec3(0.98, 0.95, 0.40);
+    else if (h > 0.955) col = vec3(0.95, 0.40, 0.45);
+  }
+  // alberi sulla fascia d'erba (sprite procedurale 5×6), mai al centro dove stanno le icone
+  vec2 tc = floor(c / 6.0);
+  if (sd < -12.0 && sd > -60.0 && hash12(tc + uSeed * 1.3) > 1.0 - uP_trees) {
+    vec2 lp = c - tc * 6.0;                       // 0..5 dentro la cella
+    vec2 o = lp - vec2(2.5, 2.0);
+    float r = length(o);
+    if (r < 2.1) col = (o.x + o.y < -0.6) ? vec3(0.36, 0.66, 0.30) : FOREST;   // chioma con luce in alto a sinistra
+    else if (r < 2.7 && lp.y < 4.0) col = vec3(0.10, 0.25, 0.14);              // contorno
+    if (lp.y >= 4.0 && abs(lp.x - 2.5) < 0.6) col = vec3(0.45, 0.28, 0.16);    // tronco
+    if (lp.y == 5.0 && abs(lp.x - 2.5) < 1.6 && abs(lp.x - 2.5) > 0.6) col = GRASS2 * 0.8;  // ombra
+  }
+  // scogli in acqua bassa
+  if (water > 0.5 && sd < 26.0 && hash12(c + 77.0 + uSeed) > 0.993) col = vec3(0.55, 0.55, 0.58);
+  // onde a pixel nel mare aperto
+  if (sd > 26.0) {
+    vec2 wc = floor(c / vec2(6.0, 3.0));
+    if (hash12(wc + uSeed) > 0.9 && mod(c.x, 6.0) < 3.0 && mod(c.y, 3.0) == 0.0) col = mix(col, FOAM, 0.35);
+  }
+  outColor = vec4(col, water);
+}`,
+
+  fragment: COMMON + `
+void main() {
+  vec2 p = cssPos();
+  vec2 c = floor(p / PX);
+  vec4 st = staticTexel();
+  vec3 col = st.rgb;
+  float t = uTime;
+  // luccichii che compaiono e scompaiono a scatti (4 fps, come un vecchio gioco)
+  float ft = floor(t * 4.0);
+  if (st.a > 0.5 && hash12(c + ft * 0.37 + uSeed) > 0.997) col = FOAM;
+  // ombre delle nuvole, anche loro a pixel e a scatti
+  vec2 cc = floor((p + vec2(floor(t * 6.0) * PX, floor(t * 2.0) * PX)) / (PX * 2.0));
+  float cl = tex(cc * PX * 2.0, 700.0).r + (bayer(c) - 0.5) * 0.08;
+  if (uP_clouds > 0.5 && cl > 0.66) col *= 0.82;
+  if (st.a > 0.5 && rippleRing(floor(p / PX) * PX + PX * 0.5) > 0.45) col = FOAM;
+  outColor = vec4(col, 1.0);
+}`,
+});
+</script>
+</body></html>

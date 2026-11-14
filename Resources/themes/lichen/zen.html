@@ -1,0 +1,202 @@
+<!doctype html>
+<!-- Lichen · Giardino zen — Copyright (C) 2026 Lichen contributors — GPL-3.0-or-later -->
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Lichen · Giardino zen</title>
+</head>
+<body>
+<script src="core.js"></script>
+<script>
+'use strict';
+const MAX_ROCKS = 6, MAX_LEAVES = 14;
+
+Lichen.start({
+  background: '#dcd7c9',
+  sigma: 40, warp: 26, coast: 1.0,
+  animated: false,                 // statico: si ridisegna solo quando le icone si muovono
+  params: { rings: { def: 5 }, spacing: { def: 15 }, leaves: { def: 1 } },
+
+  // Rocce "libere" lontano dalle icone: diverse a ogni seme, ognuna con il suo muschio e i suoi anelli.
+  extraRects(api) {
+    const rng = api.rng(1), rocks = [];
+    const want = 2 + Math.floor(rng() * 3);
+    for (let tries = 0; tries < 200 && rocks.length < want; tries++) {
+      const x = 140 + rng() * (api.W - 280), y = 120 + rng() * (api.H - 240);
+      const r = 22 + rng() * 22, k = rng() * 1000;
+      const far = api.icons.every(ic => Math.hypot(ic.x + ic.w / 2 - x, ic.y + ic.h / 2 - y) > 300)
+        && rocks.every(o => Math.hypot(o.x - x, o.y - y) > 340);
+      if (far) rocks.push({ x, y, r, k });
+    }
+    api.state.rocks = rocks;
+    return rocks.map(o => ({ cx: o.x, cy: o.y, hw: o.r * 1.1, hh: o.r * 0.9 }));
+  },
+
+  // Foglie d'acero cadute sulla ghiaia, mai sul muschio.
+  place(api) {
+    const rng = api.rng(2), leaves = [];
+    const want = Math.round((6 + Math.floor(rng() * 7)) * api.P.leaves);
+    for (let tries = 0; tries < 400 && leaves.length < want; tries++) {
+      const x = 30 + rng() * (api.W - 60), y = 30 + rng() * (api.H - 60);
+      if (api.sampleS(x, y) < 30) continue;
+      // a volte a gruppetti
+      const n = rng() < 0.35 ? 2 + Math.floor(rng() * 2) : 1;
+      for (let j = 0; j < n && leaves.length < want; j++)
+        leaves.push([x + (rng() - 0.5) * 30 * j, y + (rng() - 0.5) * 30 * j, rng() * 6.283, rng()]);
+    }
+    api.state.leaves = leaves;
+  },
+
+  uniforms(gl, u, now, api) {
+    const rocks = api.state.rocks || [], leaves = api.state.leaves || [];
+    const r = new Float32Array(MAX_ROCKS * 4), l = new Float32Array(MAX_LEAVES * 4);
+    rocks.slice(0, MAX_ROCKS).forEach((o, i) => r.set([o.x, o.y, o.r, o.k], i * 4));
+    leaves.slice(0, MAX_LEAVES).forEach((o, i) => l.set(o, i * 4));
+    gl.uniform4fv(u('uRock'), r); gl.uniform1i(u('uRockN'), Math.min(rocks.length, MAX_ROCKS));
+    gl.uniform4fv(u('uLeaf'), l); gl.uniform1i(u('uLeafN'), Math.min(leaves.length, MAX_LEAVES));
+  },
+
+  fragment: `
+uniform vec4 uRock[${MAX_ROCKS}];
+uniform int uRockN;
+uniform vec4 uLeaf[${MAX_LEAVES}];
+uniform int uLeafN;
+
+const vec2 L = vec2(-0.5547, -0.8321);          // verso la luce: in alto a sinistra (y CSS verso il basso)
+const vec3 L3 = vec3(-0.45, -0.68, 0.58);
+
+float SP = 15.0;            // distanza tra i solchi (uP_spacing)
+const float EDGE = 6.0;     // fascia liscia attorno al muschio
+float RINGS = 5.0;          // anelli concentrici prima dei solchi dritti (uP_rings)
+
+vec3 gravel(vec2 p) {
+  float g1 = hash12(floor(p * uScale / 1.5));
+  float g2 = hash12(floor(p * uScale / 3.5) + 7.31);
+  vec3 c = vec3(0.882, 0.862, 0.808);
+  c *= 0.94 + 0.06 * g1 + 0.05 * (g2 - 0.5);
+  c *= 0.97 + 0.07 * (fbm(p * 0.0025 + uSeed) - 0.5);       // macchie ampie, diverse a ogni seme
+  // sassolini scuri sparsi
+  float pebble = hash12(floor(p / 3.0) + 91.7);
+  if (pebble > 0.992) c *= 0.82;
+  return c;
+}
+
+// Solchi rastrellati: un'onda lungo la direzione del rastrello, illuminata come un rilievo.
+float rake(vec2 p, float s, vec2 g) {
+  float outer = EDGE + RINGS * SP;
+  float ph; vec2 dir;
+  if (s < outer) {
+    ph = (s - EDGE) / SP;
+    dir = normalize(g + vec2(1e-6));
+  } else {
+    // solchi dritti, leggermente inclinati e ondulati in modo diverso a ogni seme
+    float tilt = (fract(uSeed * 0.618) - 0.5) * 0.18;
+    vec2 q = rot(tilt) * p;
+    float wv = (fbm(vec2(q.x * 0.0018, q.y * 0.0009) + uSeed * 1.7) - 0.5) * 46.0;
+    ph = (q.y + wv) / SP;
+    dir = vec2(-sin(tilt), cos(tilt));
+  }
+  float a = 6.2831853 * ph;
+  float aa = clamp(1.4 - fwidth(ph) * 2.5, 0.0, 1.0);
+  float lit = -dot(dir, L) * sin(a);
+  float depth = 0.5 + 0.5 * cos(a);
+  float k = 1.0 + aa * (0.15 * lit - 0.09 * depth);
+  k = mix(1.0, k, smoothstep(EDGE - 2.0, EDGE + 1.0, s));
+  k *= 1.0 - 0.10 * smoothstep(1.5, 0.0, abs(s - outer));     // il solco che chiude gli anelli
+  return k;
+}
+
+vec3 moss(vec2 p, float s, vec2 g) {
+  float f = fbm(p * 0.04 + uSeed * 3.1);
+  vec4 n = tex(p, 160.0);
+  vec3 c = mix(vec3(0.19, 0.30, 0.13), vec3(0.43, 0.56, 0.23), smoothstep(0.2, 0.8, f * 0.6 + n.r * 0.5));
+  c *= 0.86 + 0.24 * hash12(floor(p * uScale / 2.0) + 3.1);          // ciuffi
+  c *= 0.92 + 0.16 * hash12(floor(p / 4.0) + 5.7);
+  vec2 dn = normalize(g + vec2(1e-6));
+  float rim = smoothstep(-16.0, 0.0, s);                               // cupola: luce sul lato verso la luce
+  c *= 1.0 + rim * (0.16 * max(dot(dn, L), 0.0) - 0.28 * max(dot(dn, -L), 0.0));
+  // fiorellini
+  vec2 cell = floor(p / 7.0);
+  if (hash12(cell + 11.0) > 0.975) {
+    vec2 q = fract(p / 7.0) - 0.5;
+    c = mix(c, vec3(0.96, 0.93, 0.78), smoothstep(0.2, 0.1, length(q)) * 0.9);
+  }
+  return c;
+}
+
+vec3 stone(vec2 q, float R, float k, vec2 p) {
+  vec2 nq = q / R;
+  float nz = sqrt(max(1.0 - dot(nq, nq), 0.0));
+  float lit = clamp(dot(normalize(vec3(nq, nz * 0.9)), normalize(L3)), 0.0, 1.0);
+  vec3 c = mix(vec3(0.23, 0.23, 0.24), vec3(0.66, 0.65, 0.62), lit);
+  vec4 n = tex(p + k, 45.0);
+  c *= 0.82 + 0.32 * n.b;
+  c = mix(c, vec3(0.62, 0.66, 0.38), smoothstep(0.66, 0.74, n.a) * 0.7);   // licheni
+  c *= 0.93 + 0.1 * hash12(floor(p * uScale / 1.5) + k);
+  return c;
+}
+
+float rockR(vec2 q, vec4 r) {
+  vec2 d = normalize(q + vec2(1e-6));
+  return r.z * (0.82 + 0.36 * vnoise(d * 1.7 + r.w));
+}
+
+float leafShape(vec2 q) {
+  // foglia d'acero semplificata: cinque lobi appuntiti
+  float a = atan(q.y, q.x), r = length(q);
+  float lobes = 0.55 + 0.45 * pow(abs(cos(a * 2.5)), 0.6);
+  float R = 10.0 * lobes * (a > 1.2 && a < 1.95 ? 0.35 : 1.0);
+  return smoothstep(0.7, -0.7, r - R);
+}
+
+void main() {
+  SP = uP_spacing; RINGS = uP_rings;
+  vec2 p = cssPos();
+  float s = fieldS(p);
+  vec2 g = fieldGrad(p);
+
+  vec3 col = gravel(p) * rake(p, s, g);
+
+  // ombra delle cupole di muschio sulla ghiaia
+  float sh = smoothstep(5.0, -5.0, fieldS(p - L * 9.0));
+  col *= 1.0 - 0.18 * sh * smoothstep(-2.0, 2.0, s);
+
+  // muschio con bordo irregolare
+  float sEdge = s + (tex(p, 55.0).g - 0.5) * 9.0;
+  col = mix(col, moss(p, s, g), smoothstep(0.8, -0.8, sEdge));
+
+  // rocce: ombra, poi pietra
+  for (int i = 0; i < ${MAX_ROCKS}; i++) {
+    if (i >= uRockN) break;
+    vec4 r = uRock[i];
+    vec2 qs = p + L * 10.0 - r.xy;
+    float Rs = rockR(qs, r);
+    col *= 1.0 - 0.35 * smoothstep(Rs + 4.0, Rs - 6.0, length(qs * vec2(0.9, 1.0)));
+    vec2 q = p - r.xy;
+    float R = rockR(q, r);
+    float inside = smoothstep(R + 0.8, R - 0.8, length(q));
+    col = mix(col, stone(q, R, r.w, p), inside);
+  }
+
+  // foglie cadute
+  for (int i = 0; i < ${MAX_LEAVES}; i++) {
+    if (i >= uLeafN) break;
+    vec4 lf = uLeaf[i];
+    vec2 q = rot(lf.z) * (p - lf.xy);
+    if (dot(q, q) > 400.0) continue;
+    float shadow = leafShape(rot(lf.z) * (p + L * 2.5 - lf.xy));
+    col *= 1.0 - 0.25 * shadow;
+    vec3 lc = mix(vec3(0.72, 0.16, 0.09), vec3(0.94, 0.63, 0.16), lf.w);
+    lc *= 0.85 + 0.25 * smoothstep(-6.0, 6.0, dot(q, vec2(0.6, -0.8)));
+    lc *= 1.0 - 0.3 * smoothstep(0.6, 0.0, abs(q.y)) * step(0.0, q.x);   // nervatura
+    col = mix(col, lc, leafShape(q));
+  }
+
+  col *= 1.0 - 0.07 * ripple(p) * step(0.0, fieldS(p));
+  outColor = vec4(col, 1.0);
+}
+`,
+});
+</script>
+</body>
+</html>

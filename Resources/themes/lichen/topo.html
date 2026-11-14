@@ -1,0 +1,73 @@
+<!doctype html>
+<!-- Lichen · Topografica — Copyright (C) 2026 Lichen contributors — GPL-3.0-or-later -->
+<html lang="it"><head><meta charset="utf-8"><title>Lichen · Topografica</title></head>
+<body>
+<script src="core.js"></script>
+<script>
+'use strict';
+Lichen.start({
+  background: '#f3f0e6',
+  sigma: 70, warp: 46, coast: 0.6,
+  animated: false,                 // statica: zero consumi a riposo
+  params: { interval: { def: 11 }, grid: { def: 1 } },
+  // colline basse sparse: le curve di livello coprono tutta la mappa
+  extraRects(api) {
+    return api.scatter(1, 9, { fromIcons: 240, apart: 260, margin: 0 })
+      .map(o => ({ cx: o.x, cy: o.y, hw: 4 + o.r * 20, hh: 4 + o.r * 14 }));
+  },
+
+  fragment: `
+const vec2 L = vec2(-0.5547, -0.8321);
+#define CI uP_interval            // equidistanza delle curve di livello
+
+void main() {
+  vec2 p = cssPos();
+  float s = fieldS(p);
+  vec2 g = fieldGrad(p);
+  float e = -s;                     // "quota": massima sotto le icone
+
+  // carta
+  vec3 paper = vec3(0.955, 0.945, 0.905) * (0.985 + 0.03 * tex(p, 200.0).r);
+  paper *= 0.99 + 0.02 * hash12(floor(p * uScale));
+
+  // tinte altimetriche tenui (pianura verde → collina beige → cima rosata)
+  float hgt = smoothstep(-260.0, 60.0, e);
+  vec3 tint = mix(vec3(0.83, 0.90, 0.80), vec3(0.93, 0.89, 0.78), smoothstep(0.0, 0.6, hgt));
+  tint = mix(tint, vec3(0.94, 0.84, 0.78), smoothstep(0.6, 1.0, hgt));
+  vec3 col = paper * tint * 1.04;
+
+  // laghetti nelle zone più basse
+  float lake = smoothstep(-250.0, -258.0, e + (tex(p, 160.0).r - 0.5) * 40.0);
+  col = mix(col, vec3(0.70, 0.84, 0.92), lake);
+
+  // ombreggiatura del rilievo
+  float shade = dot(normalize(vec3(-g * 3.0, 1.0)), normalize(vec3(L, 0.8)));
+  col *= 0.92 + 0.12 * shade;
+
+  // curve di livello: sottili, una ogni cinque più marcata
+  float k = e / CI;
+  float idx = floor(k + 0.5);
+  float line = aaline(fract(k + 0.5) - 0.5, 1.0);
+  bool major = mod(idx, 5.0) == 0.0;
+  vec3 ink = vec3(0.62, 0.44, 0.30);
+  float w = major ? 1.8 : 0.9;
+  line = aaline(fract(k + 0.5) - 0.5, w);
+  col = mix(col, ink, line * (major ? 0.75 : 0.45) * (1.0 - lake));
+  col = mix(col, vec3(0.40, 0.58, 0.72), aaline(e + 250.0 + (tex(p, 160.0).r - 0.5) * 40.0, 1.2));   // riva
+
+  // reticolo cartografico
+  vec2 gp = mod(p + 0.5, 160.0);
+  float grid = max(1.0 - smoothstep(0.0, 1.0, min(gp.x, 160.0 - gp.x)), 1.0 - smoothstep(0.0, 1.0, min(gp.y, 160.0 - gp.y)));
+  col = mix(col, vec3(0.45, 0.60, 0.75), grid * 0.35 * uP_grid);
+
+  // cornice
+  vec2 m = min(p, uView - p);
+  float frame = aaline(min(m.x, m.y) - 10.0, 1.0) + aaline(min(m.x, m.y) - 14.0, 2.2);
+  col = mix(col, vec3(0.30, 0.28, 0.25), clamp(frame, 0.0, 1.0) * 0.8);
+
+  col = mix(col, vec3(0.40, 0.58, 0.72), rippleRing(p) * 0.6);
+  outColor = vec4(col, 1.0);
+}`,
+});
+</script>
+</body></html>
