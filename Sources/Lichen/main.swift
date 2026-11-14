@@ -7,6 +7,15 @@ if args.contains("--dump") {
     IconReader.dumpTree()
     exit(0)
 }
+if args.contains("--attention") {
+    // quota di desktop visibile per schermo e secondi senza input (vedi Attention)
+    for s in NSScreen.screens {
+        let v = CoverDetector.visibleFraction([s])[s.displayID ?? 0] ?? 1
+        print(String(format: "schermo %u: visibile %.0f%%", s.displayID ?? 0, v * 100))
+    }
+    print(String(format: "inattivo da %.0f s", Attention.idleSeconds))
+    exit(0)
+}
 if let i = args.firstIndex(of: "--make-icon"), i + 1 < args.count {
     do { try IconArt.writeIconset(to: URL(fileURLWithPath: args[i + 1])); exit(0) } catch { print(error); exit(1) }
 }

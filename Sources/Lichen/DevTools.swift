@@ -4,6 +4,7 @@ import SwiftUI
 // Strumenti da riga di comando per lo sviluppo (non usati dall'app normale):
 //   --snapshot <cartella> [id ...] [--demo]   PNG di ogni tema
 //   --thumbs <cartella> [id ...]              anteprime dei temi Lichen per il pannello
+//   --attention                               quota di desktop visibile e inattività
 //   --panel-test                              misura i blocchi del thread principale del pannello
 //                                             (THEME=<id>, STAY=main|settings|back per catturarlo)
 

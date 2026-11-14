@@ -38,7 +38,10 @@ final class ThemeWebView: NSView {
           let dpr = \(scale);
           try { Object.defineProperty(window, 'devicePixelRatio', { get: () => dpr, configurable: true }); } catch (e) {}
           window.__lichenFPS = \(fps);
-          window.__lichenSetQuality = (s, f) => { dpr = s; window.__lichenFPS = f; dispatchEvent(new Event('resize')); };
+          window.__lichenSetQuality = (s, f) => {
+            window.__lichenFPS = f;
+            if (s !== dpr) { dpr = s; dispatchEvent(new Event('resize')); }
+          };
           // Le pagine di Deskland chiedono un fotogramma a ogni refresh dello schermo (fino a 120 Hz) e
           // si limitano da sole solo a 30 fps: qui requestAnimationFrame rispetta gli fps scelti dall'host
           // e, a pagina in pausa, si sveglia 4 volte al secondo. Un timer invece del rAF a vuoto: tra un
@@ -230,8 +233,11 @@ final class ThemeWebView: NSView {
 
     func setQuality(_ q: RenderQuality) {
         guard q != quality else { return }
+        let sameScale = q.scale == quality.scale
         quality = q
         web.evaluateJavaScript("window.__lichenSetQuality && window.__lichenSetQuality(\(q.scale), \(q.fps))")
+        // solo gli fps: la pagina non si ridimensiona e le icone restano dove sono
+        if sameScale { return }
         // le icone vanno rimandate nella nuova scala
         lastIcons = nil
         if let pts = lastIconsPoints { setIcons(pts) }

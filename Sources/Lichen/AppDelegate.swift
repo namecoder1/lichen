@@ -5,31 +5,68 @@ import SwiftUI
 /// Rileva gli schermi coperti da una finestra a schermo intero o massimizzata (come fa Deskland su Windows).
 /// Usa solo i rettangoli delle finestre, che non richiedono il permesso di registrazione schermo.
 enum CoverDetector {
-    static func coveredDisplays(_ screens: [NSScreen]) -> Set<CGDirectDisplayID> {
+    /// Quota di ogni schermo lasciata scoperta dalle finestre normali (0 = tutto coperto, 1 = desktop libero).
+    /// Si sommano tutte le finestre, non solo la più grande: due finestre affiancate coprono lo schermo
+    /// quanto una a tutto schermo. Calcolo su una griglia di 64×40 celle, che basta e costa poco.
+    static func visibleFraction(_ screens: [NSScreen]) -> [CGDirectDisplayID: Double] {
+        var out: [CGDirectDisplayID: Double] = [:]
+        for s in screens { if let id = s.displayID { out[id] = 1 } }
         guard let list = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements],
                                                     kCGNullWindowID) as? [[String: Any]]
-        else { return [] }
+        else { return out }
         let me = ProcessInfo.processInfo.processIdentifier
         // finestre di sistema temporanee (Mission Control, Exposé, Stage Manager, centro notifiche…)
         let system: Set<String> = ["Dock", "WindowManager", "Window Server", "Control Center", "Centro di Controllo",
                                    "NotificationCenter", "Notification Center", "Centro Notifiche", "screencaptureui",
                                    "Spotlight", "loginwindow", "ScreenSaverEngine"]
-        var covered = Set<CGDirectDisplayID>()
+        var rects: [CGRect] = []
         for w in list {
             guard (w[kCGWindowLayer as String] as? Int) == 0,
                   (w[kCGWindowOwnerPID as String] as? Int32) != me,
                   !system.contains(w[kCGWindowOwnerName as String] as? String ?? ""),
                   (w[kCGWindowAlpha as String] as? Double ?? 1) > 0.5,
                   let b = w[kCGWindowBounds as String] as? NSDictionary,
-                  let rect = CGRect(dictionaryRepresentation: b)
+                  let rect = CGRect(dictionaryRepresentation: b), rect.width > 40, rect.height > 40
             else { continue }
-            for s in screens {
-                guard let id = s.displayID else { continue }
-                let sf = s.cgFrame, i = rect.intersection(sf)
-                if !i.isNull, i.width * i.height >= sf.width * sf.height * 0.85 { covered.insert(id) }
-            }
+            rects.append(rect)
         }
-        return covered
+        let cols = 64, rows = 40
+        for s in screens {
+            guard let id = s.displayID else { continue }
+            let sf = s.cgFrame
+            let mine = rects.compactMap { r -> CGRect? in let i = r.intersection(sf); return i.isNull ? nil : i }
+            guard !mine.isEmpty else { continue }
+            var covered = 0
+            for row in 0..<rows {
+                let y = sf.minY + (Double(row) + 0.5) * sf.height / Double(rows)
+                for col in 0..<cols {
+                    let x = sf.minX + (Double(col) + 0.5) * sf.width / Double(cols)
+                    if mine.contains(where: { $0.contains(CGPoint(x: x, y: y)) }) { covered += 1 }
+                }
+            }
+            out[id] = 1 - Double(covered) / Double(cols * rows)
+        }
+        return out
+    }
+}
+
+/// Quanto conta l'animazione in questo momento: piena, a ritmo ridotto o ferma.
+enum Attention {
+    /// Sotto questa quota di desktop visibile si va in pausa (dopo 2 s).
+    static let hiddenBelow = 0.15
+    /// Sotto questa quota il desktop si vede poco: metà degli fps.
+    static let glimpseBelow = 0.5
+    /// Nessun input da tastiera, mouse o trackpad da tanto: nessuno sta guardando, 10 fps.
+    static let idleAfter: TimeInterval = 90
+
+    static var idleSeconds: TimeInterval {
+        CGEventSource.secondsSinceLastEventType(.combinedSessionState, eventType: CGEventType(rawValue: ~0)!)
+    }
+
+    static func fpsCap(visible: Double, idle: TimeInterval) -> Int? {
+        if idle > idleAfter { return 10 }
+        if visible < glimpseBelow { return 15 }
+        return nil
     }
 }
 
@@ -53,6 +90,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, AppActions {
     /// Da quando ogni schermo risulta coperto: si mette in pausa solo dopo un paio di secondi,
     /// così le coperture di passaggio non interrompono l'animazione.
     private var coveredSince: [CGDirectDisplayID: Date] = [:]
+    /// Tetto agli fps per schermo (desktop poco visibile, utente lontano); nil = nessun tetto.
+    private var fpsCaps: [CGDirectDisplayID: Int] = [:]
     /// Ultima decisione di qualità per schermo (calcolarla interroga batteria e temperatura: non a ogni giro).
     private var decisions: [CGDirectDisplayID: QualityPolicy.Decision] = [:]
     /// Schermo bloccato, salvaschermo, monitor spenti o utente cambiato: il desktop non si vede.
@@ -241,8 +280,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, AppActions {
             let t = theme(for: w.targetScreen)
             guard t.id != w.theme.id else { continue }
             // prima la qualità del tema nuovo, così la pagina nasce già alla risoluzione giusta
-            w.setQuality(QualityPolicy.decide(mode: model.qualityMode, backingScale: w.targetScreen.backingScaleFactor,
-                                              heavy: t.heavy).quality)
+            w.setQuality(capped(QualityPolicy.decide(mode: model.qualityMode, backingScale: w.targetScreen.backingScaleFactor,
+                                                     heavy: t.heavy).quality, for: w))
             w.load(t, settings: ThemeSettingsStore.values(for: t))
             changed = true
         }
@@ -541,6 +580,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, AppActions {
                                     heavy: theme(for: screen).heavy)
     }
 
+    private func capped(_ q: RenderQuality, for w: DesktopWindow) -> RenderQuality {
+        guard let id = w.displayID, let cap = fpsCaps[id] else { return q }
+        return RenderQuality(scale: q.scale, fps: min(q.fps, cap))
+    }
+
+    private func effectiveQuality(for w: DesktopWindow) -> RenderQuality {
+        capped(decision(for: w.targetScreen).quality, for: w)
+    }
+
     /// Risoluzione e fps per ogni schermo; in automatico segue batteria, Risparmio energetico, temperatura.
     private func applyQuality() {
         lastQualityCheck = Date()
@@ -550,8 +598,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, AppActions {
             let d = QualityPolicy.decide(mode: model.qualityMode, backingScale: w.targetScreen.backingScaleFactor,
                                          heavy: w.theme.heavy)
             if let id = w.displayID { decisions[id] = d }
-            if d.quality != w.themeView.quality { NSLog("[lichen] qualità %@ → %.2fx %d fps", d.reason, d.quality.scale, d.quality.fps) }
-            w.setQuality(d.quality)
+            let q = capped(d.quality, for: w)
+            if q != w.themeView.quality { NSLog("[lichen] qualità %@ → %.2fx %d fps", d.reason, q.scale, q.fps) }
+            w.setQuality(q)
             reason = d.reason
         }
         if model.qualityReason != reason { model.qualityReason = reason }
@@ -606,16 +655,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, AppActions {
         axQueue.async { [weak self] in
             let trusted = AXIsProcessTrusted()
             let rects = trusted ? (readIcons ? IconReader.readIconRects() : previous) : []
-            let covered = CoverDetector.coveredDisplays(screens)
+            let visible = CoverDetector.visibleFraction(screens)
+            let idle = Attention.idleSeconds
             DispatchQueue.main.async {
                 guard let self else { return }
                 self.polling = false
-                self.apply(trusted: trusted, rects: rects, covered: covered)
+                self.apply(trusted: trusted, rects: rects, visible: visible, idle: idle)
             }
         }
     }
 
-    private func apply(trusted: Bool, rects: [CGRect], covered: Set<CGDirectDisplayID>) {
+    private func apply(trusted: Bool, rects: [CGRect], visible: [CGDirectDisplayID: Double], idle: TimeInterval) {
         if trusted != lastTrusted {
             lastTrusted = trusted
             model.trusted = trusted
@@ -630,7 +680,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, AppActions {
             if trusted { w.updateIcons(rects) }
             var isCovered = false
             if let id = w.displayID {
-                if covered.contains(id) {
+                let seen = visible[id] ?? 1
+                let cap = Attention.fpsCap(visible: seen, idle: idle)
+                if fpsCaps[id] != cap {
+                    fpsCaps[id] = cap
+                    w.setQuality(effectiveQuality(for: w))
+                }
+                if seen < Attention.hiddenBelow {
                     let since = coveredSince[id] ?? Date()
                     coveredSince[id] = since
                     isCovered = Date().timeIntervalSince(since) > 2
