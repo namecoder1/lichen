@@ -128,8 +128,8 @@ La chiave pubblica EdDSA è in `scripts/config.sh`; la privata sta nel Portachia
 ## Sostieni Lichen
 
 Lichen è gratis e lo resterà. Se ti fa compagnia sulla scrivania e vuoi aiutarne lo sviluppo:
-[GitHub Sponsors](https://github.com/sponsors/namecoder1) o le altre opzioni sul
-[sito](https://namecoder1.github.io/lichen/#support). Anche una stella al repo o una segnalazione
+[GitHub Sponsors](https://github.com/sponsors/namecoder1) (mensile o una tantum) oppure
+[Ko-fi](https://ko-fi.com/namecoder1) (senza account, con carta o PayPal). Anche una stella al repo o una segnalazione
 di bug sono un aiuto.
 
 ## Licenza

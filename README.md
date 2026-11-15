@@ -109,8 +109,8 @@ hyphen (`v1.0.0-rc.1`) become pre-releases. Required secrets are listed at the t
 ## Support Lichen
 
 Lichen is free and will stay free. If it keeps you company on your desktop and you'd like to help:
-[GitHub Sponsors](https://github.com/sponsors/namecoder1) or the other options on the
-[website](https://namecoder1.github.io/lichen/#support). A star or a bug report helps too.
+[GitHub Sponsors](https://github.com/sponsors/namecoder1) (monthly or one-time) or
+[Ko-fi](https://ko-fi.com/namecoder1) (no account needed, card or PayPal). A star or a bug report helps too.
 
 ## License
 
