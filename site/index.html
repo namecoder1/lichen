@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lichen — a living wallpaper for macOS</title>
+<meta name="description" content="Free, open-source animated wallpaper for macOS that grows a landscape around your desktop icons.">
+<meta property="og:title" content="Lichen — a living wallpaper for macOS">
+<meta property="og:description" content="A landscape that grows around your desktop icons. Free and open source.">
+<meta property="og:image" content="https://namecoder1.github.io/lichen/images/reef.jpg">
+<link rel="icon" href="icon.png">
+<style>
+  :root {
+    --bg: #f6f4ee; --fg: #1d2420; --muted: #5d6862; --card: #ffffff; --line: #e2ded3;
+    --accent: #2f7a5b; --accent-fg: #ffffff; --code: #ece8dd;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #121614; --fg: #e8ece9; --muted: #9aa6a0; --card: #1b201d; --line: #2a312d;
+      --accent: #5cc195; --accent-fg: #0d1210; --code: #222925;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #121614; --fg: #e8ece9; --muted: #9aa6a0; --card: #1b201d; --line: #2a312d;
+    --accent: #5cc195; --accent-fg: #0d1210; --code: #222925;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--bg); color: var(--fg);
+         font: 17px/1.55 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif; }
+  a { color: var(--accent); }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 16px; }
+  header { display: flex; align-items: center; justify-content: space-between; padding: 18px 0; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 19px; color: var(--fg); text-decoration: none; }
+  .brand img { width: 32px; height: 32px; }
+  nav { display: flex; gap: 18px; font-size: 15px; }
+  nav a { color: var(--muted); text-decoration: none; }
+  nav a:hover { color: var(--fg); }
+  .lang { background: none; border: 1px solid var(--line); color: var(--muted); border-radius: 999px;
+          padding: 3px 10px; font: inherit; font-size: 13px; cursor: pointer; }
+  .hero { text-align: center; padding: 48px 0 28px; }
+  .hero h1 { font-size: clamp(34px, 6vw, 56px); line-height: 1.08; margin: 0 0 14px; letter-spacing: -0.02em; }
+  .hero p { font-size: clamp(17px, 2.4vw, 20px); color: var(--muted); max-width: 640px; margin: 0 auto 26px; }
+  .cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; align-items: center; }
+  .btn { display: inline-block; background: var(--accent); color: var(--accent-fg); text-decoration: none;
+         padding: 12px 22px; border-radius: 12px; font-weight: 600; }
+  .btn.ghost { background: transparent; color: var(--fg); border: 1px solid var(--line); }
+  code { background: var(--code); padding: 2px 7px; border-radius: 6px; font: 14px ui-monospace, "SF Mono", Menlo, monospace; }
+  .brew { margin-top: 16px; color: var(--muted); font-size: 15px; overflow-wrap: anywhere; }
+  .shot { margin: 34px auto 0; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,.18); }
+  .shot img { display: block; width: 100%; height: auto; }
+  section { padding: 56px 0 8px; }
+  h2 { font-size: 30px; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 18px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+  .card img { display: block; width: 100%; aspect-ratio: 16 / 10; object-fit: cover; }
+  .card div { padding: 12px 14px 14px; }
+  .card b { display: block; }
+  .card span { color: var(--muted); font-size: 15px; }
+  .features { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px 28px; padding: 0; list-style: none; }
+  .features li b { display: block; }
+  .features li span { color: var(--muted); font-size: 15px; }
+  .support { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 28px; }
+  .support p { color: var(--muted); max-width: 680px; }
+  .support .cta { justify-content: flex-start; margin-top: 18px; }
+  footer { padding: 48px 0 40px; color: var(--muted); font-size: 14px; }
+  footer p { margin: 6px 0; }
+  html:not([lang="it"]) [data-it], html[lang="it"] [data-en], [hidden] { display: none !important; }
+  @media (max-width: 560px) { nav a.hide-s { display: none; } .support { padding: 20px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a class="brand" href="#"><img src="icon.png" alt="">Lichen</a>
+    <nav>
+      <a class="hide-s" href="#themes"><span data-en>Themes</span><span data-it>Temi</span></a>
+      <a class="hide-s" href="#support"><span data-en>Support</span><span data-it>Sostieni</span></a>
+      <a href="https://github.com/namecoder1/lichen">GitHub</a>
+      <button class="lang" id="lang" type="button">IT</button>
+    </nav>
+  </header>
+
+  <div class="hero">
+    <h1 data-en>A landscape that grows around your desktop icons.</h1>
+    <h1 data-it>Un paesaggio che cresce attorno alle icone del desktop.</h1>
+    <p data-en>Lichen is a living wallpaper for macOS. Move a file and the coastline follows. Free, open source, no account, no ads.</p>
+    <p data-it>Lichen è uno sfondo vivo per macOS. Sposti un file e la costa lo segue. Gratis, open source, senza account né pubblicità.</p>
+    <div class="cta">
+      <a class="btn" href="https://github.com/namecoder1/lichen/releases/latest">
+        <span data-en>Download for macOS</span><span data-it>Scarica per macOS</span></a>
+      <a class="btn ghost" href="#support"><span data-en>Support Lichen ♥</span><span data-it>Sostieni Lichen ♥</span></a>
+    </div>
+    <p class="brew"><span data-en>or with Homebrew:</span><span data-it>oppure con Homebrew:</span>
+      <code>brew install --cask namecoder1/tap/lichen</code><br>
+      <span data-en>macOS 13 or later · Apple Silicon and Intel</span><span data-it>macOS 13 o successivo · Apple Silicon e Intel</span></p>
+    <div class="shot"><img src="images/reef.jpg" alt="Coral reef theme" width="1600" height="1039"></div>
+  </div>
+
+  <section id="themes">
+    <h2 data-en>Seven landscapes</h2><h2 data-it>Sette paesaggi</h2>
+    <div class="grid">
+      <div class="card"><img src="images/beach.webp" alt="" loading="lazy"><div><b data-en>Beach</b><b data-it>Spiaggia</b>
+        <span data-en>Turquoise coasts, kayaks and palms. From Deskland.</span><span data-it>Coste turchesi, kayak e palme. Da Deskland.</span></div></div>
+      <div class="card"><img src="images/meadow.webp" alt="" loading="lazy"><div><b data-en>Meadow</b><b data-it>Prato</b>
+        <span data-en>Clouds, a kite and a kitten. From Deskland.</span><span data-it>Nuvole, un aquilone e un gattino. Da Deskland.</span></div></div>
+      <div class="card"><img src="images/zen.jpg" alt="" loading="lazy"><div><b data-en>Zen garden</b><b data-it>Giardino zen</b>
+        <span data-en>Moss, rocks and raked gravel.</span><span data-it>Muschio, rocce e ghiaia rastrellata.</span></div></div>
+      <div class="card"><img src="images/reef.jpg" alt="" loading="lazy"><div><b data-en>Coral reef</b><b data-it>Barriera corallina</b>
+        <span data-en>Corals, caustics and schools of fish.</span><span data-it>Coralli, caustiche e banchi di pesci.</span></div></div>
+      <div class="card"><img src="images/pixel.jpg" alt="" loading="lazy"><div><b>Pixel RPG</b>
+        <span data-en>A 16-bit world map.</span><span data-it>Una mappa a 16 bit.</span></div></div>
+      <div class="card"><img src="images/topo.jpg" alt="" loading="lazy"><div><b data-en>Topographic</b><b data-it>Topografica</b>
+        <span data-en>Contour lines and hypsometric tints.</span><span data-it>Curve di livello e tinte altimetriche.</span></div></div>
+      <div class="card"><img src="images/blueprint.jpg" alt="" loading="lazy"><div><b>Blueprint</b>
+        <span data-en>Drafting paper and dimensioned outlines.</span><span data-it>Carta da progetto e quote tecniche.</span></div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2 data-en>Made for your Mac</h2><h2 data-it>Fatto per il tuo Mac</h2>
+    <ul class="features">
+      <li><b data-en>Click the water</b><b data-it>Clicca sull'acqua</b>
+        <span data-en>A ripple spreads where you click the desktop.</span><span data-it>Un'onda si allarga dove clicchi il desktop.</span></li>
+      <li><b data-en>Follows the sun</b><b data-it>Segue il sole</b>
+        <span data-en>Golden hour, blue hour and night, without location access.</span><span data-it>Tramonto, ora blu e notte, senza accesso alla posizione.</span></li>
+      <li><b data-en>Lock screen and screen saver</b><b data-it>Blocco e salvaschermo</b>
+        <span data-en>Your landscape on the lock screen, or animated as a screen saver.</span><span data-it>Il paesaggio nella schermata di blocco, o animato come salvaschermo.</span></li>
+      <li><b data-en>Light on resources</b><b data-it>Leggero</b>
+        <span data-en>Pauses when windows cover the desktop. Static themes use no GPU at rest.</span><span data-it>Si ferma quando le finestre coprono il desktop. I temi statici non usano la GPU.</span></li>
+      <li><b data-en>Private</b><b data-it>Riservato</b>
+        <span data-en>Reads only where your icons are. No analytics, no account.</span><span data-it>Legge solo dove stanno le icone. Niente statistiche, niente account.</span></li>
+      <li><b data-en>Multiple displays</b><b data-it>Più schermi</b>
+        <span data-en>A different theme on each monitor, rotating hourly or daily.</span><span data-it>Un tema diverso per monitor, a rotazione ogni ora o ogni giorno.</span></li>
+    </ul>
+  </section>
+
+  <section id="support">
+    <div class="support">
+      <h2 data-en>Support Lichen</h2><h2 data-it>Sostieni Lichen</h2>
+      <p data-en>Lichen is free and will stay free. It's made in spare time; if it keeps you company on your desktop, a small donation helps new themes and macOS updates happen. Thank you!</p>
+      <p data-it>Lichen è gratis e lo resterà. È fatto nel tempo libero: se ti fa compagnia sulla scrivania, una piccola donazione aiuta a creare nuovi temi e a seguire gli aggiornamenti di macOS. Grazie!</p>
+      <div class="cta">
+        <a class="btn" href="https://github.com/sponsors/namecoder1">GitHub Sponsors</a>
+        <a class="btn ghost" id="kofi" href="https://ko-fi.com/" hidden>Ko-fi</a>
+        <a class="btn ghost" href="https://github.com/namecoder1/lichen"><span data-en>★ Star on GitHub</span><span data-it>★ Stella su GitHub</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p data-en>Lichen is free software under the GPL-3.0. The Beach and Meadow themes come from
+      <a href="https://github.com/BLEZZ0102/Deskland">Deskland Preview</a> (GPL-3.0). Lichen is an independent project,
+      inspired by <a href="https://deskland.app">Deskland</a> for Windows, and is not affiliated with or endorsed by it.</p>
+    <p data-it>Lichen è software libero sotto licenza GPL-3.0. I temi Spiaggia e Prato vengono da
+      <a href="https://github.com/BLEZZ0102/Deskland">Deskland Preview</a> (GPL-3.0). Lichen è un progetto indipendente,
+      ispirato a <a href="https://deskland.app">Deskland</a> per Windows, non affiliato né approvato da Deskland.</p>
+    <p><a href="https://github.com/namecoder1/lichen">GitHub</a> ·
+      <a href="https://github.com/namecoder1/lichen/blob/main/CHANGELOG.md">Changelog</a> ·
+      <a href="https://github.com/namecoder1/lichen/issues/new/choose"><span data-en>Report a problem</span><span data-it>Segnala un problema</span></a></p>
+  </footer>
+</div>
+<script>
+  // Ko-fi: imposta il nome utente qui quando la pagina esiste (vuoto = pulsante nascosto)
+  const KOFI = '';
+  if (KOFI) { const k = document.getElementById('kofi'); k.href = 'https://ko-fi.com/' + KOFI; k.hidden = false; }
+
+  const root = document.documentElement, btn = document.getElementById('lang');
+  function setLang(l) {
+    root.lang = l; btn.textContent = l === 'it' ? 'EN' : 'IT';
+    try { localStorage.setItem('lang', l); } catch (e) {}
+  }
+  let saved = null;
+  try { saved = localStorage.getItem('lang'); } catch (e) {}
+  setLang(saved || ((navigator.language || '').startsWith('it') ? 'it' : 'en'));
+  btn.addEventListener('click', () => setLang(root.lang === 'it' ? 'en' : 'it'));
+</script>
+</body>
+</html>

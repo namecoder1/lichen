@@ -1,0 +1,43 @@
+name: Bug report
+description: Something doesn't work as expected
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for taking the time! Italian or English are both fine. / Va bene anche in italiano.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, what happened instead? Screenshots help.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Lichen version
+      description: Shown at the bottom right of the menu bar panel.
+      placeholder: "0.5.0"
+    validations:
+      required: true
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version and Mac
+      placeholder: "macOS 15.2 · MacBook Air M2"
+    validations:
+      required: true
+  - type: dropdown
+    id: theme
+    attributes:
+      label: Theme
+      multiple: true
+      options: [Beach, Meadow, Zen garden, Coral reef, Pixel RPG, Topographic, Blueprint, Screen saver, Not theme related]
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs (optional)
+      description: |
+        Run this in Terminal, reproduce the problem, then paste the output:
+        `log stream --style compact --predicate 'process == "Lichen"'`
+      render: text

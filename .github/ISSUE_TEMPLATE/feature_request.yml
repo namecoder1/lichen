@@ -1,0 +1,11 @@
+name: Idea or new theme
+description: Suggest a feature or a landscape you'd like to see
+labels: [enhancement]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: Your idea
+      description: What would you like Lichen to do or show? Reference images are welcome.
+    validations:
+      required: true

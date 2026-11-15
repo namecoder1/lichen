@@ -1,11 +1,15 @@
 # Lichen
 
+[English](README.md) · **Italiano**
+
+<p align="center"><img src="docs/images/reef.jpg" alt="Lichen, tema Barriera corallina" width="800"></p>
+
 Sfondo animato per macOS che fa crescere un paesaggio attorno alle icone del desktop.
 Quando sposti, crei o cancelli un file sulla scrivania, il paesaggio si adatta. Ogni avvio
 (o "Nuovo paesaggio" dal menu) genera coste, dune e solchi diversi.
 
 Software libero sotto licenza **GPL-3.0**. Gratis, senza pubblicità, senza account.
-Se ti piace, puoi sostenere il progetto con una donazione volontaria (link in arrivo).
+Se ti piace, puoi [sostenere il progetto](https://namecoder1.github.io/lichen/#support) con una donazione volontaria.
 
 > Lichen è un progetto indipendente per macOS ispirato a [Deskland](https://deskland.app) (Windows).
 > I temi Spiaggia e Prato vengono da [Deskland Preview](https://github.com/BLEZZ0102/Deskland) (GPL-3.0).
@@ -38,9 +42,10 @@ Ogni tema cambia a ogni "Nuovo paesaggio". Sotto le icone c'è sempre la "terra"
   In alternativa, al blocco parte il salvaschermo animato.
 - **Salvaschermo animato** (`Lichen.saver`): stesso motore, con arcipelaghi che cambiano forma ogni 20 s.
   Tema fisso o casuale dalle Opzioni del salvaschermo.
-- **Leggero:** i temi statici non consumano nulla a riposo; risoluzione e fps scendono su Mac Intel, a batteria,
-  in Risparmio energetico o se il Mac si scalda; pausa quando una finestra copre il desktop, con il Mac bloccato,
-  durante il salvaschermo e con gli schermi spenti.
+- **Leggero:** i temi statici non consumano nulla a riposo. Quelli animati vanno in pausa quando le finestre
+  coprono il desktop, rallentano se si vede poco o se nessuno usa il Mac, e disegnano a risoluzione più bassa
+  a batteria, in Risparmio energetico, su Mac Intel o se il Mac si scalda. Misure in
+  [docs/benchmarks](docs/benchmarks/README.md).
 - **Universale:** Apple Silicon e Intel, macOS 13 o successivo.
 
 ## Installazione
@@ -82,6 +87,7 @@ oppure scarica lo zip dalle [Releases](https://github.com/namecoder1/lichen/rele
 | `Resources/themes/lichen/core.js` | Motore comune dei temi Lichen (campo, rumore, morphing, protocollo) |
 | `Resources/themes/lichen/*.html` | Temi Lichen: ognuno è uno shader più il posizionamento dei dettagli |
 | `Resources/themes/deskland/` | Temi di Deskland, inclusi senza modifiche (commit in `UPSTREAM_COMMIT`) |
+| `Resources/themes/patches/` | Correzioni di Lichen ai temi di Deskland, applicate dall'host |
 
 Per creare un tema: copia `zen.html`, cambia lo shader (`fieldS(p)` < 0 sotto le icone) e aggiungilo a
 `ThemeCatalog.all`. Aprendo la pagina direttamente nel browser si vede un'anteprima con icone finte
@@ -97,6 +103,8 @@ swift build -c release && .build/release/Lichen   # avvio rapido (il permesso va
 .build/release/Lichen --make-icon /tmp/AppIcon.iconset && iconutil -c icns /tmp/AppIcon.iconset -o Resources/AppIcon.icns
 scripts/build-app.sh 0.1.0                         # dist/Lichen.app + zip
 .build/release/Lichen --panel-test                 # misura la fluidità del pannello
+.build/release/Lichen --attention                  # quota di desktop visibile e inattività
+scripts/bench.sh                                   # benchmark GPU di tutti i temi
 ```
 
 ## Rilasci
@@ -116,6 +124,13 @@ La chiave pubblica EdDSA è in `scripts/config.sh`; la privata sta nel Portachia
 
 - Altri temi: stagno con ninfee, neve
 - Pile (Stacks), "Nascondi elementi della scrivania": da testare
+
+## Sostieni Lichen
+
+Lichen è gratis e lo resterà. Se ti fa compagnia sulla scrivania e vuoi aiutarne lo sviluppo:
+[GitHub Sponsors](https://github.com/sponsors/namecoder1) o le altre opzioni sul
+[sito](https://namecoder1.github.io/lichen/#support). Anche una stella al repo o una segnalazione
+di bug sono un aiuto.
 
 ## Licenza
 
