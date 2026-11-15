@@ -62,7 +62,11 @@ jobs:
           FILES=(dist/*.zip)
           [[ -f dist/appcast.xml ]] && FILES+=(dist/appcast.xml)
           PRE=(); [[ "$GITHUB_REF_NAME" == *-* ]] && PRE=(--prerelease)
-          gh release create "$GITHUB_REF_NAME" "${FILES[@]}" --title "$GITHUB_REF_NAME" --generate-notes "${PRE[@]}"
+          # note: la sezione "## [X.Y.Z]" di CHANGELOG.md, se c'è; altrimenti quelle generate da GitHub
+          V="${GITHUB_REF_NAME#v}"
+          awk -v v="$V" '/^## \[/{p = index($0, "[" v "]") > 0; next} p' CHANGELOG.md > "$RUNNER_TEMP/notes.md" || true
+          if [[ -s "$RUNNER_TEMP/notes.md" ]]; then NOTES=(--notes-file "$RUNNER_TEMP/notes.md"); else NOTES=(--generate-notes); fi
+          gh release create "$GITHUB_REF_NAME" "${FILES[@]}" --title "Lichen $V" "${NOTES[@]}" "${PRE[@]}"
 
       - name: Aggiorna il tap Homebrew
         if: env.HOMEBREW_TAP_TOKEN != '' && !contains(github.ref_name, '-')
