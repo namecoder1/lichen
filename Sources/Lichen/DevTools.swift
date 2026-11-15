@@ -32,10 +32,13 @@ final class SnapshotDelegate: NSObject, NSApplicationDelegate {
         current?.orderOut(nil)
         guard !queue.isEmpty, let screen = NSScreen.screens.first else { exit(0) }
         let theme = queue.removeFirst()
+        // I temi di Lichen aperti senza host disegnano da soli icone finte; quelli di Deskland no,
+        // quindi in --demo ricevono dall'host le stesse icone finte (disposte come in core.js).
+        let pageDemo = demo && theme.credit == nil
         let w = DesktopWindow(screen: screen, theme: theme, seed: Int.random(in: 1..<1_000_000),
-                              quality: Self.envQuality(screen, theme: theme), demo: demo)
+                              quality: Self.envQuality(screen, theme: theme), demo: pageDemo)
         w.orderFront(nil)
-        if !demo { w.updateIcons(IconReader.readIconRects()) }
+        if !pageDemo { w.updateIcons(demo ? Self.fakeIcons(screen) : IconReader.readIconRects()) }
         current = w
         // LIGHT=<altezza del sole>: velo della luce; stampa il numero della finestra per la cattura
         // HOLD=1: resta aperto in primo piano (per misurare, vedi scripts/bench.sh)
@@ -49,7 +52,8 @@ final class SnapshotDelegate: NSObject, NSApplicationDelegate {
             DispatchQueue.main.asyncAfter(deadline: .now() + 4) { print("finestra:", w.windowNumber); fflush(stdout) }
             return
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+        // WAIT=<secondi>: attesa prima dello scatto (predefinita 5)
+        DispatchQueue.main.asyncAfter(deadline: .now() + (env["WAIT"].flatMap(Double.init) ?? 5)) {
             w.snapshot { image in
                 if let image {
                     let out = self.thumbs ? Self.thumbnail(image) : image
@@ -66,6 +70,18 @@ final class SnapshotDelegate: NSObject, NSApplicationDelegate {
                 self.next()
             }
         }
+    }
+
+    /// Icone finte in coordinate globali (punti, origine in alto a sinistra): due colonne a destra
+    /// come nel Finder e due icone in mezzo, come l'anteprima di core.js.
+    static func fakeIcons(_ screen: NSScreen) -> [CGRect] {
+        let f = screen.cgFrame, W = f.width, H = f.height
+        var r: [CGRect] = []
+        for i in 0..<7 { r.append(CGRect(x: W - 100, y: 40 + CGFloat(i) * 92, width: 80, height: 78)) }
+        for i in 0..<4 { r.append(CGRect(x: W - 190, y: 40 + CGFloat(i) * 92, width: 80, height: 78)) }
+        r.append(CGRect(x: W * 0.35, y: H * 0.45, width: 80, height: 78))
+        r.append(CGRect(x: W * 0.35 + 90, y: H * 0.45, width: 80, height: 78))
+        return r.map { $0.offsetBy(dx: f.minX, dy: f.minY) }
     }
 
     /// QUALITY=high|balanced|saver: la qualità che l'app sceglierebbe per quel tema;
