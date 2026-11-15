@@ -486,6 +486,10 @@ private struct FooterBar: View {
                     Button("Controlla aggiornamenti…") { model.actions?.checkForUpdates() }
                 }
                 Divider()
+                // Lichen è gratis: chi vuole può sostenerlo (GitHub Sponsors, Ko-fi) dal sito
+                Link("Sostieni Lichen ♥︎", destination: URL(string: "https://namecoder1.github.io/lichen/#support")!)
+                Link("Segnala un problema…", destination: URL(string: "https://github.com/namecoder1/lichen/issues/new/choose")!)
+                Divider()
                 Link("Temi Spiaggia e Prato: Deskland (GPL-3.0)", destination: URL(string: "https://github.com/BLEZZ0102/Deskland")!)
                 Divider()
                 Button("Esci da Lichen") { NSApp.terminate(nil) }
