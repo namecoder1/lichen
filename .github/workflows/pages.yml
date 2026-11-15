@@ -6,7 +6,7 @@ name: Pages
 on:
   push:
     branches: [main]
-    paths: ["site/**", "docs/images/**", "Resources/thumbs/**", ".github/workflows/pages.yml"]
+    paths: ["site/**", "docs/images/**", "Resources/thumbs/**", "Resources/themes/lichen/**", ".github/workflows/pages.yml"]
   workflow_dispatch:
 
 permissions:
@@ -34,6 +34,9 @@ jobs:
           cp -R site/. _site/
           cp docs/images/*.jpg _site/images/
           cp Resources/thumbs/beach.webp Resources/thumbs/meadow.webp _site/images/
+          # temi di Lichen per la demo dal vivo (solo quelli di Lichen, non quelli di Deskland)
+          mkdir -p _site/themes
+          cp Resources/themes/lichen/*.html Resources/themes/lichen/core.js _site/themes/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
       - id: deployment

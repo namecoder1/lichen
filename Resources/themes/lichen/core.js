@@ -453,6 +453,12 @@ float aaline(float x, float w) { float d = abs(x) / max(fwidth(x), 1e-4); return
     if (HOSTED && window.chrome && window.chrome.webview) {
       window.chrome.webview.addEventListener('message', ev => handle(JSON.parse(ev.data)));
       window.chrome.webview.postMessage('ready');
+    } else if (QS.has('embed') && window.parent !== window) {
+      // Demo del sito (iframe): la pagina madre manda gli stessi messaggi dell'host con postMessage
+      addEventListener('message', ev => {
+        if (ev.source === window.parent && ev.data && typeof ev.data.t === 'string') handle(ev.data);
+      });
+      window.parent.postMessage('lichen-ready', '*');
     } else {
       // Anteprima nel browser: icone finte in colonna a destra (come il Finder) e qualcuna in mezzo.
       const demo = [];

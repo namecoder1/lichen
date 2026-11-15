@@ -19,6 +19,7 @@ final class SnapshotDelegate: NSObject, NSApplicationDelegate {
 
     init(dir: URL, ids: [String], demo: Bool, thumbs: Bool = false) {
         self.dir = dir
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         self.demo = demo
         self.thumbs = thumbs
         let all = thumbs ? ThemeCatalog.all.filter { $0.credit == nil } : ThemeCatalog.all
