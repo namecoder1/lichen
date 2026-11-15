@@ -271,7 +271,7 @@ private struct SettingsPage: View {
             .tileBackground(isOn: false, radius: 24)
 
             VStack(spacing: 0) {
-                PickerRow(symbol: "sun.horizon", title: "Luce", selection: Binding(
+                PickerRow(symbol: "sun.and.horizon", title: "Luce", selection: Binding(
                     get: { model.lightMode }, set: { model.actions?.setLightMode($0) }),
                           options: LightMode.allCases, label: \.label)
                 Divider().padding(.leading, 44)
@@ -416,7 +416,7 @@ private struct TileGrid: View {
                 }
                 .pickerStyle(.inline)
             } label: {
-                TileLabel(symbol: "gauge.with.dots.needle.67percent", title: "Qualità",
+                TileLabel(symbol: "gauge.medium", title: "Qualità",
                           subtitle: model.qualityReason, isOn: false)
             }
             .menuStyle(.button)

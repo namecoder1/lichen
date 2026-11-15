@@ -42,8 +42,8 @@ extension ThemeInfo {
                 .slider("sigma", "Ampiezza dei prati", "circle.dashed", 40...200, def: 72, step: 1),
                 .slider("cover", "Nuvole", "cloud", 0...1, def: 0.3),
                 .slider("flow", "Vento", "wind", 0...3, def: 1),
-                .toggle("showBoy", "Bambino con l'aquilone", "figure.child"),
-                .toggle("showCat", "Gattino", "cat"),
+                .toggle("showBoy", "Bambino con l'aquilone", "figure.run"),
+                .toggle("showCat", "Gattino", "pawprint"),
             ]
         case "zen":
             return [

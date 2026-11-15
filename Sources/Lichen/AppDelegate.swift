@@ -188,7 +188,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, AppActions {
         slowTimer?.tolerance = 10
         poll()
         applyRipples()
-        if model.lockScreen { scheduleLockScreen(delay: 4) }
+        if syncsWallpaper { scheduleLockScreen(delay: 4) }
     }
 
     /// Clic sull'icona nel Dock (se visibile): apre il pannello.
@@ -305,7 +305,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, AppActions {
         reloadChangedWindows()
         updateStatusIcon()
         updateDockIcon()
-        if model.lockScreen { scheduleLockScreen(delay: 1) }
+        if syncsWallpaper { scheduleLockScreen(delay: 1) }
     }
 
     func setTargetDisplay(_ id: CGDirectDisplayID?) {
@@ -347,7 +347,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, AppActions {
             guard let self else { return }
             let values = ThemeSettingsStore.values(for: t)
             for w in self.windows where w.theme.id == t.id { w.setSettings(values) }
-            if self.model.lockScreen { self.scheduleLockScreen(delay: 3) }
+            if self.syncsWallpaper { self.scheduleLockScreen(delay: 3) }
         }
         settingsWork = work
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.08, execute: work)
@@ -358,7 +358,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, AppActions {
         seed = Int.random(in: 1..<1_000_000)
         defaults.set(seed, forKey: "seed")
         windows.forEach { $0.setSeed(seed) }
-        if model.lockScreen { scheduleLockScreen(delay: 1) }
+        if syncsWallpaper { scheduleLockScreen(delay: 1) }
     }
 
     func setPaused(_ paused: Bool) {
@@ -378,7 +378,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, AppActions {
         defaults.set(mode.rawValue, forKey: "lockMode")
         switch mode {
         case .off:
-            WallpaperExporter.shared.restoreOriginals()
+            // fino a macOS 15 lo sfondo resta il tema (barra dei menu) e torna quello originale all'uscita
+            if !menuBarFollowsWallpaper { WallpaperExporter.shared.restoreOriginals() }
         case .image:
             scheduleLockScreen(delay: 0)
         case .saver:
@@ -500,7 +501,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, AppActions {
             reloadChangedWindows()
             updateStatusIcon()
             updateDockIcon()
-            if model.lockScreen { scheduleLockScreen(delay: 4) }
+            if syncsWallpaper { scheduleLockScreen(delay: 4) }
         }
     }
 
@@ -530,16 +531,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate, AppActions {
 
     /// Vero se sotto il puntatore non c'è nessuna finestra normale né un'icona del Finder.
     private func isDesktop(at p: NSPoint) -> Bool {
+        // barra dei menu e Dock non sono desktop
+        guard let screen = NSScreen.screens.first(where: { $0.frame.contains(p) }),
+              screen.visibleFrame.contains(p) else { return false }
         let primaryHeight = NSScreen.screens.first?.frame.height ?? 0
         let q = CGPoint(x: p.x, y: primaryHeight - p.y)          // coordinate Quartz
         if lastIconRects.contains(where: { $0.contains(q) }) { return false }
         guard let list = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements],
                                                     kCGNullWindowID) as? [[String: Any]] else { return false }
+        let sf = screen.cgFrame
         for w in list {
             guard let layer = w[kCGWindowLayer as String] as? Int, layer >= 0,
                   (w[kCGWindowAlpha as String] as? Double ?? 1) > 0.01,
                   let b = w[kCGWindowBounds as String] as? NSDictionary,
                   let rect = CGRect(dictionaryRepresentation: b) else { continue }
+            // Sopra le finestre normali molte app e il sistema tengono livelli trasparenti grandi quanto
+            // lo schermo (Dock, strumenti di cattura, sovrapposizioni): non bloccano i clic al Finder,
+            // quindi non contano. Contano finestre, pannelli e menu veri.
+            if layer >= 20 {
+                let i = rect.intersection(sf)
+                if !i.isNull, i.width * i.height >= sf.width * sf.height * 0.9 { continue }
+            }
             if rect.contains(q) { return false }
         }
         return true
@@ -557,11 +569,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate, AppActions {
         NSApp.applicationIconImage = IconArt.dockIcon(for: globalTheme) ?? NSImage(named: NSImage.applicationIconName)
     }
 
+    func applicationWillTerminate(_ notification: Notification) {
+        // sfondo cambiato solo per la barra dei menu: all'uscita torna quello dell'utente
+        if model.lockMode == .off && menuBarFollowsWallpaper { WallpaperExporter.shared.restoreOriginals() }
+    }
+
+    /// Fino a macOS 15 la barra dei menu è traslucida e prende il colore dall'immagine di sfondo di
+    /// sistema, non dalle finestre sotto di lei: senza aggiornare lo sfondo resterebbe del colore di prima.
+    /// Da macOS 26 la barra è trasparente e mostra direttamente Lichen.
+    private var menuBarFollowsWallpaper: Bool {
+        !ProcessInfo.processInfo.isOperatingSystemAtLeast(OperatingSystemVersion(majorVersion: 26, minorVersion: 0, patchVersion: 0))
+    }
+
+    /// Lichen tiene lo sfondo di sistema uguale al tema: per la schermata di blocco o per la barra dei menu.
+    private var syncsWallpaper: Bool { model.lockScreen || menuBarFollowsWallpaper }
+
     /// Lo sfondo di sistema (e quindi la schermata di blocco) segue il tema, senza icone.
     private func scheduleLockScreen(delay: TimeInterval) {
         lockScreenWork?.cancel()
         let work = DispatchWorkItem { [weak self] in
-            guard let self, self.model.lockScreen else { return }
+            guard let self, self.syncsWallpaper else { return }
             self.model.busy = "Aggiorno la schermata di blocco…"
             WallpaperExporter.shared.applyLockScreen(themeFor: { [unowned self] in self.theme(for: $0) },
                                                      seed: self.seed) { [weak self] in
