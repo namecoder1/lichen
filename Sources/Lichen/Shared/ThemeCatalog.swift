@@ -17,9 +17,9 @@ struct ThemeInfo: Identifiable, Hashable {
     let tagline: String
     let credit: String?
 
-    /// Pagine che ridisegnano tutto lo schermo a ogni fotogramma con uno shader pesante (Deskland):
-    /// l'host le fa disegnare a risoluzione e fps più bassi.
-    var heavy: Bool { page.hasPrefix("deskland/") }
+    /// Pagine che ridisegnano tutto lo schermo a ogni fotogramma con uno shader pesante (acqua, nuvole,
+    /// caustiche): l'host le fa disegnare a risoluzione e fps più bassi. Misure in docs/benchmarks.
+    var heavy: Bool { page.hasPrefix("deskland/") || id == "reef" }
 
     /// Anteprima: Resources/thumbs/<id>.(jpg|png|webp)
     var thumbnail: NSImage? { ThemeCatalog.thumbnail(for: id) }

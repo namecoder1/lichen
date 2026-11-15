@@ -23,6 +23,9 @@ Lichen.start({
   background: '#3878cc',
   sigma: 52, warp: 40, coast: 1.0,
   animated: true,
+  // pixel art: 1 pixel di pagina = 1 punto, ingrandito senza sfumature; luccichii e nuvole
+  // cambiano a scatti di 4–6 fps, quindi 12 fps bastano (le onde dei clic restano fluide)
+  maxScale: 1, maxFps: 12, pixelated: true,
   params: { trees: { def: 0.38 }, clouds: { def: 1 } },
   extraRects(api) {
     return api.scatter(1, 4, { fromIcons: 280, apart: 320 })

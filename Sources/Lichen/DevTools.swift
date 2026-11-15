@@ -32,17 +32,19 @@ final class SnapshotDelegate: NSObject, NSApplicationDelegate {
         guard !queue.isEmpty, let screen = NSScreen.screens.first else { exit(0) }
         let theme = queue.removeFirst()
         let w = DesktopWindow(screen: screen, theme: theme, seed: Int.random(in: 1..<1_000_000),
-                              quality: Self.envQuality(screen), demo: demo)
+                              quality: Self.envQuality(screen, theme: theme), demo: demo)
         w.orderFront(nil)
         if !demo { w.updateIcons(IconReader.readIconRects()) }
         current = w
-        // LIGHT=<altezza del sole>: prova del velo della luce, stampa il numero della finestra per la cattura
-        // HOLD=1: resta aperto senza velo (per misurare)
+        // LIGHT=<altezza del sole>: velo della luce; stampa il numero della finestra per la cattura
+        // HOLD=1: resta aperto in primo piano (per misurare, vedi scripts/bench.sh)
         let env = ProcessInfo.processInfo.environment
-        if env["HOLD"] != nil { w.level = .floating; return }
-        if let e = env["LIGHT"].flatMap(Double.init) {
+        let light = env["LIGHT"].flatMap(Double.init)
+        if let e = light { w.themeView.setLight(SunLight.tint(elevation: e), seconds: 0) }
+        if light != nil || env["HOLD"] != nil {
             w.level = .floating
-            w.themeView.setLight(SunLight.tint(elevation: e), seconds: 0)
+            let q = w.themeView.quality
+            print("qualità:", q.scale, q.fps); fflush(stdout)
             DispatchQueue.main.asyncAfter(deadline: .now() + 4) { print("finestra:", w.windowNumber); fflush(stdout) }
             return
         }
@@ -65,9 +67,13 @@ final class SnapshotDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    /// SCALE=<x> FPS=<n>: qualità di prova (predefinita: risoluzione dello schermo, 30 fps).
-    static func envQuality(_ screen: NSScreen) -> RenderQuality {
+    /// QUALITY=high|balanced|saver: la qualità che l'app sceglierebbe per quel tema;
+    /// oppure SCALE=<x> FPS=<n>; predefinita: risoluzione dello schermo, 30 fps.
+    static func envQuality(_ screen: NSScreen, theme: ThemeInfo) -> RenderQuality {
         let env = ProcessInfo.processInfo.environment
+        if let mode = env["QUALITY"].flatMap(QualityMode.init(rawValue:)) {
+            return QualityPolicy.decide(mode: mode, backingScale: screen.backingScaleFactor, heavy: theme.heavy).quality
+        }
         return RenderQuality(scale: env["SCALE"].flatMap(Double.init).map { CGFloat($0) } ?? screen.backingScaleFactor,
                              fps: env["FPS"].flatMap(Int.init) ?? 30)
     }

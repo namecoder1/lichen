@@ -6,7 +6,8 @@
  * con domain warp e trasformazione logaritmica) segue l'approccio di Deskland
  * (https://github.com/BLEZZ0102/Deskland, GPL-3.0).
  *
- * Un tema chiama Lichen.start({ fragment, staticFragment?, sigma, warp, coast, animated, params?, extraRects?, place?, uniforms? }).
+ * Un tema chiama Lichen.start({ fragment, staticFragment?, sigma, warp, coast, animated, params?, extraRects?, place?, uniforms?,
+ *                               maxScale?, maxFps?, pixelated? }).
  * `params`: { chiave: { def, field? } } — impostazioni regolabili dall'host ({t:'settings', v:{chiave: valore}});
  * ogni parametro arriva allo shader come `uniform float uP_<chiave>` e ai callback come api.P.<chiave>.
  * Il parametro speciale `sigma` regola la distanza della "costa" dalle icone.
@@ -127,6 +128,8 @@ float aaline(float x, float w) { float d = abs(x) / max(fwidth(x), 1e-4); return
     document.body.style.cssText = `margin:0;height:100%;overflow:hidden;background:${T.background || '#000'}`;
     const cv = document.createElement('canvas');
     cv.style.cssText = 'display:block;width:100vw;height:100vh';
+    // pixel art: la pagina disegna a bassa risoluzione e lo schermo ingrandisce senza sfumare
+    if (T.pixelated) cv.style.imageRendering = 'pixelated';
     document.body.appendChild(cv);
     const gl = cv.getContext('webgl2', { antialias: false, alpha: false });
     if (!gl) { document.body.textContent = 'WebGL2 non disponibile'; return; }
@@ -316,7 +319,8 @@ float aaline(float x, float w) { float d = abs(x) / max(fwidth(x), 1e-4); return
     }
 
     function resize() {
-      W = innerWidth; H = innerHeight; dpr = devicePixelRatio || 1;
+      // maxScale: un tema può disegnare a meno pixel della qualità scelta (pixel art, immagini morbide)
+      W = innerWidth; H = innerHeight; dpr = Math.min(devicePixelRatio || 1, T.maxScale || Infinity);
       cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
       Gw = Math.ceil(W / STEP) + 2; Gh = Math.ceil(H / STEP) + 2;
       allocStatic();
@@ -405,8 +409,11 @@ float aaline(float x, float w) { float d = abs(x) / max(fwidth(x), 1e-4); return
       while (ripples.length && now - ripples[0].t0 > 2300) ripples.shift();
       if (hadRipples) dirty = true;          // l'ultimo fotogramma cancella l'onda
       const morphing = now - mixT0 < MORPH_MS + 100;
-      const interval = 1000 / (window.__lichenFPS || 30);
+      // maxFps: un tema che cambia a scatti (pixel art a 4–6 fps) non ha bisogno di 30 fotogrammi
+      const interval = 1000 / Math.min(window.__lichenFPS || 30, T.maxFps || Infinity);
       if (dirty || morphing || ripples.length) {
+        // onde e crescita del paesaggio: fluide ma al massimo 60 fps (non 120 sugli schermi ProMotion)
+        if (!dirty && now - last < 1000 / 60 - 3) { wake(); return; }
         last = now; dirty = false;
         draw(now);
         wake();
