@@ -104,7 +104,7 @@ scripts/build-app.sh 0.1.0                         # dist/Lichen.app + zip
 
 Releases: pushing a `vX.Y.Z` tag runs `.github/workflows/release.yml`, which builds, signs, notarizes,
 publishes the GitHub Release with a Sparkle `appcast.xml` and updates the Homebrew tap. Tags with a
-hyphen (`v1.0.0-rc.1`) become pre-releases. Required secrets are listed at the top of the workflow.
+hyphen (`v1.0.0-rc.1`) become pre-releases. Release checklist and credentials: [docs/MAINTAINING.md](docs/MAINTAINING.md).
 
 ## Support Lichen
 
