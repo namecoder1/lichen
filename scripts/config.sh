@@ -5,7 +5,7 @@ BUNDLE_ID="io.github.namecoder1.lichen"
 CASK="lichen"                               # brew install --cask <CASK>
 REPO="namecoder1/lichen"                    # repository GitHub dell'app
 TAP_REPO="namecoder1/homebrew-tap"          # tap Homebrew → brew tap namecoder1/tap
-DESCRIPTION="Sfondo animato che fa crescere un paesaggio attorno alle icone del desktop"
+DESCRIPTION="Animated wallpaper that grows a landscape around desktop icons"
 MIN_MACOS="13.0"
 
 # Aggiornamenti automatici (Sparkle). Chiave pubblica EdDSA (`generate_keys -p`): può stare nel repo.
