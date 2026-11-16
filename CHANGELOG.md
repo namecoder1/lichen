@@ -2,7 +2,7 @@
 
 All notable changes to Lichen. Versions follow [Semantic Versioning](https://semver.org).
 
-## [0.6.0] — unreleased
+## [0.6.0] — 2026-11-16
 
 ### Added
 - English interface. Lichen follows the language of your Mac: Italian on Italian systems,
