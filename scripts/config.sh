@@ -1,14 +1,14 @@
-# Unico punto da cambiare per nome e identificativi del progetto.
-APP_NAME="Lichen"                           # nome della .app
-TARGET="Lichen"                             # target SwiftPM (cartella in Sources/)
+# The single place to change the project's name and identifiers.
+APP_NAME="Lichen"                           # name of the .app
+TARGET="Lichen"                             # SwiftPM target (folder in Sources/)
 BUNDLE_ID="io.github.namecoder1.lichen"
 CASK="lichen"                               # brew install --cask <CASK>
-REPO="namecoder1/lichen"                    # repository GitHub dell'app
-TAP_REPO="namecoder1/homebrew-tap"          # tap Homebrew → brew tap namecoder1/tap
+REPO="namecoder1/lichen"                    # the app's GitHub repository
+TAP_REPO="namecoder1/homebrew-tap"          # Homebrew tap → brew tap namecoder1/tap
 DESCRIPTION="Animated wallpaper that grows a landscape around desktop icons"
 MIN_MACOS="13.0"
 
-# Aggiornamenti automatici (Sparkle). Chiave pubblica EdDSA (`generate_keys -p`): può stare nel repo.
-# La privata resta nel Portachiavi del maintainer e nel secret SPARKLE_PRIVATE_KEY della CI.
+# Automatic updates (Sparkle). EdDSA public key (`generate_keys -p`): safe to keep in the repo.
+# The private key stays in the maintainer's Keychain and in the CI secret SPARKLE_PRIVATE_KEY.
 SPARKLE_FEED_URL="https://github.com/$REPO/releases/latest/download/appcast.xml"
 SPARKLE_PUBLIC_KEY="${SPARKLE_PUBLIC_KEY:-nXCVWE+lWg4wLzPe+J+sjYIaY1jT1dpVU7Wq1qNCWyc=}"

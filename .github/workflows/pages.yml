@@ -1,6 +1,6 @@
-# Sito informativo su GitHub Pages (https://namecoder1.github.io/lichen/).
-# Pagina in site/, immagini prese da docs/images e dalle anteprime dei temi.
-# Attivazione una tantum: Settings → Pages → Source: GitHub Actions.
+# Website on GitHub Pages (https://namecoder1.github.io/lichen/).
+# Page in site/, images from docs/images and the theme thumbnails.
+# One-time setup: Settings → Pages → Source: GitHub Actions.
 name: Pages
 
 on:
@@ -20,7 +20,7 @@ concurrency:
 
 jobs:
   deploy:
-    # Pages gratuito solo per i repo pubblici
+    # Pages is free for public repositories only
     if: ${{ !github.event.repository.private }}
     runs-on: ubuntu-latest
     environment:
@@ -28,13 +28,13 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-      - name: Prepara il sito
+      - name: Assemble the site
         run: |
           mkdir -p _site/images
           cp -R site/. _site/
           cp docs/images/*.jpg _site/images/
           cp Resources/thumbs/beach.webp Resources/thumbs/meadow.webp _site/images/
-          # temi di Lichen per la demo dal vivo (solo quelli di Lichen, non quelli di Deskland)
+          # Lichen themes for the live demo (Lichen's own only, not the Deskland ones)
           mkdir -p _site/themes
           cp Resources/themes/lichen/*.html Resources/themes/lichen/core.js _site/themes/
       - uses: actions/configure-pages@v5

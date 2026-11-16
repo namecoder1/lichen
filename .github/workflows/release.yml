@@ -1,14 +1,14 @@
-# Pubblica una release quando fai push di un tag vX.Y.Z:
+# Publishes a release when you push a vX.Y.Z tag:
 #   git tag v0.1.0 && git push origin v0.1.0
-# Un tag con trattino (v0.4.0-rc.1) crea una pre-release di prova: niente tap, e Sparkle
-# non la vede (latest/download punta sempre all'ultima release stabile).
+# A tag with a hyphen (v0.4.0-rc.1) creates a test pre-release: no tap update, and Sparkle
+# doesn't see it (latest/download always points to the latest stable release).
 #
-# Secrets opzionali (Settings → Secrets and variables → Actions):
-#   firma + notarizzazione: MACOS_CERT_P12 (base64 del .p12 Developer ID), MACOS_CERT_PASSWORD,
+# Optional secrets (Settings → Secrets and variables → Actions):
+#   signing + notarization: MACOS_CERT_P12 (base64 of the Developer ID .p12), MACOS_CERT_PASSWORD,
 #                           SIGN_IDENTITY, APPLE_ID, APPLE_TEAM_ID, APPLE_APP_PASSWORD
-#   aggiornamento tap:      HOMEBREW_TAP_TOKEN (PAT con accesso in scrittura al repo del tap)
-#   aggiornamenti Sparkle:  SPARKLE_PRIVATE_KEY (da `generate_keys -x`; la pubblica è in scripts/config.sh)
-# Senza secrets: build firmata ad-hoc, release creata, tap non aggiornato.
+#   tap update:             HOMEBREW_TAP_TOKEN (PAT with write access to the tap repository)
+#   Sparkle updates:        SPARKLE_PRIVATE_KEY (from `generate_keys -x`; the public key is in scripts/config.sh)
+# Without secrets: ad-hoc signed build, release created, tap not updated.
 name: Release
 
 on:
@@ -28,7 +28,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Importa il certificato Developer ID
+      - name: Import the Developer ID certificate
         if: env.MACOS_CERT_P12 != ''
         env:
           MACOS_CERT_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
@@ -43,7 +43,7 @@ jobs:
           security set-key-partition-list -S apple-tool:,apple: -s -k "$KC_PASS" "$KEYCHAIN"
           security list-keychains -d user -s "$KEYCHAIN"
 
-      - name: Compila, firma e (se possibile) notarizza
+      - name: Build, sign and (when possible) notarize
         env:
           SIGN_IDENTITY: ${{ env.MACOS_CERT_P12 != '' && secrets.SIGN_IDENTITY || '' }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
@@ -51,24 +51,24 @@ jobs:
           APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
         run: scripts/build-app.sh "${GITHUB_REF_NAME#v}"
 
-      - name: Appcast per gli aggiornamenti automatici
+      - name: Appcast for automatic updates
         if: env.SPARKLE_PRIVATE_KEY != ''
         run: scripts/make-appcast.sh "${GITHUB_REF_NAME#v}"
 
-      - name: Crea la GitHub Release
+      - name: Create the GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           FILES=(dist/*.zip)
           [[ -f dist/appcast.xml ]] && FILES+=(dist/appcast.xml)
           PRE=(); [[ "$GITHUB_REF_NAME" == *-* ]] && PRE=(--prerelease)
-          # note: la sezione "## [X.Y.Z]" di CHANGELOG.md, se c'è; altrimenti quelle generate da GitHub
+          # notes: the "## [X.Y.Z]" section of CHANGELOG.md if present; otherwise GitHub's generated notes
           V="${GITHUB_REF_NAME#v}"
           awk -v v="$V" '/^## \[/{p = index($0, "[" v "]") > 0; next} p' CHANGELOG.md > "$RUNNER_TEMP/notes.md" || true
           if [[ -s "$RUNNER_TEMP/notes.md" ]]; then NOTES=(--notes-file "$RUNNER_TEMP/notes.md"); else NOTES=(--generate-notes); fi
           gh release create "$GITHUB_REF_NAME" "${FILES[@]}" --title "Lichen $V" "${NOTES[@]}" "${PRE[@]}"
 
-      - name: Aggiorna il tap Homebrew
+      - name: Update the Homebrew tap
         if: env.HOMEBREW_TAP_TOKEN != '' && !contains(github.ref_name, '-')
         run: |
           source scripts/config.sh

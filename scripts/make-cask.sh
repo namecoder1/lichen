@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Stampa il cask Homebrew per una versione già pubblicata nelle GitHub Releases.
-#   scripts/make-cask.sh 0.1.0 <sha256-dello-zip> > Casks/<cask>.rb
+# Prints the Homebrew cask for a version already published in GitHub Releases.
+#   scripts/make-cask.sh 0.1.0 <zip-sha256> > Casks/<cask>.rb
 set -euo pipefail
 cd "$(dirname "$0")/.."
 source scripts/config.sh
