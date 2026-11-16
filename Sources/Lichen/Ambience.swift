@@ -6,9 +6,9 @@ enum LightMode: String, CaseIterable, Identifiable {
     var id: String { rawValue }
     var label: String {
         switch self {
-        case .off: return "Sempre giorno"
-        case .sun: return "Segui il sole"
-        case .appearance: return "Segui l'aspetto scuro"
+        case .off: return L("Always day")
+        case .sun: return L("Follow the sun")
+        case .appearance: return L("Follow dark mode")
         }
     }
 }
@@ -19,10 +19,10 @@ enum RotationMode: String, CaseIterable, Identifiable {
     var id: String { rawValue }
     var label: String {
         switch self {
-        case .off: return "Mai"
-        case .hourly: return "Ogni ora"
-        case .daily: return "Ogni giorno"
-        case .launch: return "A ogni avvio"
+        case .off: return L("Never")
+        case .hourly: return L("Every hour")
+        case .daily: return L("Every day")
+        case .launch: return L("At every launch")
         }
     }
     var interval: TimeInterval? {

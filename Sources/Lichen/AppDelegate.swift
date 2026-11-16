@@ -589,7 +589,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, AppActions {
         lockScreenWork?.cancel()
         let work = DispatchWorkItem { [weak self] in
             guard let self, self.syncsWallpaper else { return }
-            self.model.busy = "Aggiorno la schermata di blocco…"
+            self.model.busy = L("Updating the lock screen…")
             WallpaperExporter.shared.applyLockScreen(themeFor: { [unowned self] in self.theme(for: $0) },
                                                      seed: self.seed) { [weak self] in
                 self?.model.busy = nil

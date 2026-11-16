@@ -17,7 +17,9 @@ final class LichenSaverView: ScreenSaverView {
 
     override init?(frame: NSRect, isPreview: Bool) {
         super.init(frame: frame, isPreview: isPreview)
-        if let res = Bundle(for: LichenSaverView.self).resourceURL { ThemeCatalog.resources = res }
+        let own = Bundle(for: LichenSaverView.self)
+        L10n.bundle = own
+        if let res = own.resourceURL { ThemeCatalog.resources = res }
         defaults?.register(defaults: ["theme": "random", "islands": true])
         wantsLayer = true
         layer?.backgroundColor = NSColor.black.cgColor
@@ -103,10 +105,10 @@ final class LichenSaverView: ScreenSaverView {
         title.font = .boldSystemFont(ofSize: 15)
         title.frame = NSRect(x: 20, y: 130, width: 320, height: 22)
 
-        let label = NSTextField(labelWithString: "Tema:")
+        let label = NSTextField(labelWithString: L("Theme:"))
         label.frame = NSRect(x: 20, y: 94, width: 60, height: 20)
         let popup = NSPopUpButton(frame: NSRect(x: 80, y: 89, width: 260, height: 28))
-        popup.addItem(withTitle: "Casuale a ogni avvio")
+        popup.addItem(withTitle: L("Random at every start"))
         popup.lastItem?.representedObject = "random"
         popup.menu?.addItem(.separator())
         for t in ThemeCatalog.all {
@@ -114,10 +116,10 @@ final class LichenSaverView: ScreenSaverView {
             popup.lastItem?.representedObject = t.id
         }
 
-        let check = NSButton(checkboxWithTitle: "Isole e nuvole che cambiano forma", target: nil, action: nil)
+        let check = NSButton(checkboxWithTitle: L("Islands and clouds that change shape"), target: nil, action: nil)
         check.frame = NSRect(x: 18, y: 58, width: 320, height: 22)
 
-        let ok = NSButton(title: "Fine", target: self, action: #selector(closeSheet))
+        let ok = NSButton(title: L("Done"), target: self, action: #selector(closeSheet))
         ok.keyEquivalent = "\r"
         ok.bezelStyle = .rounded
         ok.frame = NSRect(x: 250, y: 14, width: 90, height: 30)

@@ -39,16 +39,16 @@ enum LockMode: String, CaseIterable, Identifiable {
     var id: String { rawValue }
     var label: String {
         switch self {
-        case .off: return "Disattivata"
-        case .image: return "Immagine del tema"
-        case .saver: return "Salvaschermo al blocco"
+        case .off: return L("Off")
+        case .image: return L("Theme image")
+        case .saver: return L("Screen saver when locked")
         }
     }
     var short: String {
         switch self {
-        case .off: return "Disattivato"
-        case .image: return "Immagine"
-        case .saver: return "Salvaschermo"
+        case .off: return L("Off")
+        case .image: return L("Image")
+        case .saver: return L("Screen saver")
         }
     }
 }

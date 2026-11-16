@@ -48,7 +48,7 @@ final class SnapshotDelegate: NSObject, NSApplicationDelegate {
         if light != nil || env["HOLD"] != nil {
             w.level = .floating
             let q = w.themeView.quality
-            print("qualità:", q.scale, q.fps); fflush(stdout)
+            print("quality:", q.scale, q.fps); fflush(stdout)
             DispatchQueue.main.asyncAfter(deadline: .now() + 4) { print("finestra:", w.windowNumber); fflush(stdout) }
             return
         }

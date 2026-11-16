@@ -15,8 +15,6 @@ If you like it, you can [support the project](https://namecoder1.github.io/liche
 > The Beach and Meadow themes come from [Deskland Preview](https://github.com/BLEZZ0102/Deskland) (GPL-3.0).
 > Lichen is not affiliated with or endorsed by Deskland. See [NOTICE](NOTICE).
 
-> **Note:** the interface is currently in Italian. An English localization is planned.
-
 ## Install
 
 ```sh

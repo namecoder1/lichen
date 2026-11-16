@@ -31,50 +31,50 @@ extension ThemeInfo {
         switch id {
         case "beach":
             return [
-                .slider("sigma", "Ampiezza delle isole", "circle.dashed", 40...200, def: 85, step: 1),
-                .slider("shallow", "Acqua bassa", "water.waves", 120...700, def: 260, step: 1),
-                .slider("palms", "Palme", "tree", 0...10, def: 4, step: 1),
-                .slider("kayaks", "Kayak", "figure.water.fitness", 0...4, def: 2, step: 1),
-                .slider("birds", "Gabbiani", "bird", 0...8, def: 3, step: 1),
+                .slider("sigma", L("Island size"), "circle.dashed", 40...200, def: 85, step: 1),
+                .slider("shallow", L("Shallow water"), "water.waves", 120...700, def: 260, step: 1),
+                .slider("palms", L("Palms"), "tree", 0...10, def: 4, step: 1),
+                .slider("kayaks", L("Kayaks"), "figure.water.fitness", 0...4, def: 2, step: 1),
+                .slider("birds", L("Gulls"), "bird", 0...8, def: 3, step: 1),
             ]
         case "meadow":
             return [
-                .slider("sigma", "Ampiezza dei prati", "circle.dashed", 40...200, def: 72, step: 1),
-                .slider("cover", "Nuvole", "cloud", 0...1, def: 0.3),
-                .slider("flow", "Vento", "wind", 0...3, def: 1),
-                .toggle("showBoy", "Bambino con l'aquilone", "figure.run"),
-                .toggle("showCat", "Gattino", "pawprint"),
+                .slider("sigma", L("Meadow size"), "circle.dashed", 40...200, def: 72, step: 1),
+                .slider("cover", L("Clouds"), "cloud", 0...1, def: 0.3),
+                .slider("flow", L("Wind"), "wind", 0...3, def: 1),
+                .toggle("showBoy", L("Kid with a kite"), "figure.run"),
+                .toggle("showCat", L("Kitten"), "pawprint"),
             ]
         case "zen":
             return [
-                .slider("sigma", "Ampiezza del muschio", "circle.dashed", 20...90, def: 40, step: 1),
-                .slider("rings", "Anelli attorno alle isole", "circle.circle", 0...10, def: 5, step: 1),
-                .slider("spacing", "Distanza tra i solchi", "line.3.horizontal", 9...26, def: 15, step: 1),
-                .slider("leaves", "Foglie cadute", "leaf", 0...1.2, def: 1),
+                .slider("sigma", L("Moss size"), "circle.dashed", 20...90, def: 40, step: 1),
+                .slider("rings", L("Rings around islands"), "circle.circle", 0...10, def: 5, step: 1),
+                .slider("spacing", L("Furrow spacing"), "line.3.horizontal", 9...26, def: 15, step: 1),
+                .slider("leaves", L("Fallen leaves"), "leaf", 0...1.2, def: 1),
             ]
         case "reef":
             return [
-                .slider("sigma", "Ampiezza dei banchi", "circle.dashed", 30...120, def: 60, step: 1),
-                .slider("reef", "Fascia di coralli", "sparkles", 20...160, def: 80, step: 1),
-                .slider("fish", "Banchi di pesci", "fish", 0...4, def: 4, step: 1),
+                .slider("sigma", L("Sandbank size"), "circle.dashed", 30...120, def: 60, step: 1),
+                .slider("reef", L("Coral band"), "sparkles", 20...160, def: 80, step: 1),
+                .slider("fish", L("Schools of fish"), "fish", 0...4, def: 4, step: 1),
             ]
         case "pixel":
             return [
-                .slider("sigma", "Ampiezza delle isole", "circle.dashed", 30...100, def: 52, step: 1),
-                .slider("trees", "Alberi", "tree", 0...0.8, def: 0.38),
-                .toggle("clouds", "Ombre delle nuvole", "cloud"),
+                .slider("sigma", L("Island size"), "circle.dashed", 30...100, def: 52, step: 1),
+                .slider("trees", L("Trees"), "tree", 0...0.8, def: 0.38),
+                .toggle("clouds", L("Cloud shadows"), "cloud"),
             ]
         case "topo":
             return [
-                .slider("sigma", "Ampiezza dei rilievi", "circle.dashed", 40...140, def: 70, step: 1),
-                .slider("interval", "Equidistanza delle curve", "line.3.horizontal", 6...24, def: 11, step: 1),
-                .toggle("grid", "Reticolo", "grid"),
+                .slider("sigma", L("Hill size"), "circle.dashed", 40...140, def: 70, step: 1),
+                .slider("interval", L("Contour interval"), "line.3.horizontal", 6...24, def: 11, step: 1),
+                .toggle("grid", L("Grid"), "grid"),
             ]
         case "blueprint":
             return [
-                .slider("sigma", "Distanza delle quote", "circle.dashed", 14...60, def: 26, step: 1),
-                .slider("parts", "Ingranaggi", "gearshape", 0...5, def: 5, step: 1),
-                .toggle("grid", "Carta millimetrata", "grid"),
+                .slider("sigma", L("Dimension distance"), "circle.dashed", 14...60, def: 26, step: 1),
+                .slider("parts", L("Gears"), "gearshape", 0...5, def: 5, step: 1),
+                .toggle("grid", L("Graph paper"), "grid"),
             ]
         default:
             return []

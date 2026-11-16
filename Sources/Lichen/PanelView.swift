@@ -92,12 +92,12 @@ private struct HeroCard: View {
         .overlay(alignment: .topLeading) { statusChip.padding(10) }
         .overlay(alignment: .topTrailing) {
             HStack(spacing: 8) {
-                CircleButton(symbol: "slider.horizontal.3", help: "Regola il tema") {
+                CircleButton(symbol: "slider.horizontal.3", help: L("Adjust theme")) {
                     Haptics.tick(); withAnimation(.snappy) { model.page = .settings }
                 }
-                CircleButton(symbol: "dice.fill", help: "Nuovo paesaggio") { model.actions?.newLandscape() }
+                CircleButton(symbol: "dice.fill", help: L("New landscape")) { model.actions?.newLandscape() }
                 CircleButton(symbol: model.paused ? "play.fill" : "pause.fill",
-                             help: model.paused ? "Riprendi" : "Pausa") { model.actions?.setPaused(!model.paused) }
+                             help: model.paused ? L("Resume") : L("Pause")) { model.actions?.setPaused(!model.paused) }
             }
             .padding(10)
         }
@@ -107,7 +107,7 @@ private struct HeroCard: View {
     @ViewBuilder private var statusChip: some View {
         if !model.trusted {
             Button { model.actions?.openAccessibilitySettings() } label: {
-                Label("Concedi l'accesso", systemImage: "exclamationmark.triangle.fill")
+                Label(L("Grant access"), systemImage: "exclamationmark.triangle.fill")
                     .font(.caption.weight(.semibold))
                     .padding(.horizontal, 10).padding(.vertical, 6)
             }
@@ -124,9 +124,9 @@ private struct HeroCard: View {
     }
 
     private var chipText: String {
-        if model.paused { return "In pausa" }
-        if model.autoPaused { return "Pausa automatica" }
-        return "\(model.iconCount) icone"
+        if model.paused { return L("Paused") }
+        if model.autoPaused { return L("Paused automatically") }
+        return L("%d icons", model.iconCount)
     }
 
     private var chipSymbol: String {
@@ -141,7 +141,7 @@ private struct DisplayPicker: View {
 
     var body: some View {
         HStack(spacing: 6) {
-            pill(nil, "Tutti", "rectangle.on.rectangle")
+            pill(nil, L("All"), "rectangle.on.rectangle")
             ForEach(model.screens) { s in pill(s.id, s.name, "display") }
         }
         .padding(4)
@@ -226,7 +226,7 @@ private struct ThemeChip: View {
         }
         .buttonStyle(.plain)
         .onHover { h in withAnimation(.easeOut(duration: 0.15)) { hover = h } }
-        .help(theme.credit.map { "\(theme.tagline) — tema di \($0)" } ?? theme.tagline)
+        .help(theme.credit.map { L("%@, a theme by %@", theme.tagline, $0) } ?? theme.tagline)
     }
 }
 
@@ -246,16 +246,16 @@ private struct SettingsPage: View {
                 }
                 .buttonStyle(PressStyle())
                 .glassCircleBackground()
-                .help("Indietro")
+                .help(L("Back"))
 
                 VStack(alignment: .leading, spacing: 0) {
                     Text(model.theme.name).font(.system(size: 15, weight: .semibold, design: .rounded))
-                    Text(model.theme.credit.map { "Tema di \($0)" } ?? "Tema di Lichen")
+                    Text(model.theme.credit.map { L("Theme by %@", $0) } ?? L("Lichen theme"))
                         .font(.caption).foregroundStyle(.secondary)
                 }
                 Spacer()
                 Button { model.actions?.resetThemeSettings() } label: {
-                    Text("Ripristina")
+                    Text(L("Reset"))
                         .font(.caption.weight(.medium))
                         .padding(.horizontal, 12).padding(.vertical, 7)
                         .contentShape(Capsule())
@@ -271,17 +271,17 @@ private struct SettingsPage: View {
             .tileBackground(isOn: false, radius: 24)
 
             VStack(spacing: 0) {
-                PickerRow(symbol: "sun.and.horizon", title: "Luce", selection: Binding(
+                PickerRow(symbol: "sun.and.horizon", title: L("Light"), selection: Binding(
                     get: { model.lightMode }, set: { model.actions?.setLightMode($0) }),
                           options: LightMode.allCases, label: \.label)
                 Divider().padding(.leading, 44)
-                PickerRow(symbol: "arrow.triangle.2.circlepath", title: "Cambia tema", selection: Binding(
+                PickerRow(symbol: "arrow.triangle.2.circlepath", title: L("Change theme"), selection: Binding(
                     get: { model.rotation }, set: { model.actions?.setRotation($0) }),
                           options: RotationMode.allCases, label: \.label)
                 Divider().padding(.leading, 44)
                 HStack(spacing: 10) {
                     RowIcon(symbol: "drop.circle")
-                    Text("Increspature al clic").font(.system(size: 12, weight: .medium))
+                    Text(L("Ripples on click")).font(.system(size: 12, weight: .medium))
                     Spacer()
                     Toggle("", isOn: Binding(get: { model.ripples }, set: { model.actions?.setRipples($0) }))
                         .toggleStyle(.switch).controlSize(.small).labelsHidden()
@@ -391,13 +391,13 @@ private struct TileGrid: View {
     var body: some View {
         LazyVGrid(columns: cols, spacing: 10) {
             Menu {
-                Picker("Schermata di blocco", selection: Binding(
+                Picker(L("Lock screen"), selection: Binding(
                     get: { model.lockMode }, set: { model.actions?.setLockMode($0) })) {
                     ForEach(LockMode.allCases) { Text($0.label).tag($0) }
                 }
                 .pickerStyle(.inline)
             } label: {
-                TileLabel(symbol: "lock.display", title: "Blocco",
+                TileLabel(symbol: "lock.display", title: L("Lock screen"),
                           subtitle: model.lockMode.short,
                           isOn: model.lockScreen)
             }
@@ -405,18 +405,18 @@ private struct TileGrid: View {
             .buttonStyle(.plain)
             .menuIndicator(.hidden)
             .tileBackground(isOn: model.lockScreen)
-            Tile(symbol: "sparkles.tv", title: "Salvaschermo",
-                 subtitle: model.saverInstalled ? "Scegli in Impostazioni" : "Installa", isOn: model.saverInstalled) {
+            Tile(symbol: "sparkles.tv", title: L("Screen saver"),
+                 subtitle: model.saverInstalled ? L("Choose in Settings") : L("Install"), isOn: model.saverInstalled) {
                 model.actions?.installScreenSaver()
             }
             Menu {
-                Picker("Qualità", selection: Binding(get: { model.qualityMode },
+                Picker(L("Quality"), selection: Binding(get: { model.qualityMode },
                                                      set: { model.actions?.setQualityMode($0) })) {
                     ForEach(QualityMode.allCases) { Text($0.label).tag($0) }
                 }
                 .pickerStyle(.inline)
             } label: {
-                TileLabel(symbol: "gauge.medium", title: "Qualità",
+                TileLabel(symbol: "gauge.medium", title: L("Quality"),
                           subtitle: model.qualityReason, isOn: false)
             }
             .menuStyle(.button)
@@ -424,8 +424,8 @@ private struct TileGrid: View {
             .menuIndicator(.hidden)
             .tileBackground(isOn: false)
 
-            Tile(symbol: "power", title: "All'avvio",
-                 subtitle: model.launchAtLogin ? "Si apre da sola" : "Disattivato", isOn: model.launchAtLogin) {
+            Tile(symbol: "power", title: L("At login"),
+                 subtitle: model.launchAtLogin ? L("Opens automatically") : L("Off"), isOn: model.launchAtLogin) {
                 model.toggleLaunchAtLogin(!model.launchAtLogin)
             }
         }
@@ -477,22 +477,22 @@ private struct FooterBar: View {
     var body: some View {
         HStack(spacing: 8) {
             Menu {
-                Toggle("Mostra nel Dock", isOn: Binding(get: { model.showInDock }, set: { model.actions?.setShowInDock($0) }))
-                Button("Ricarica il tema") { model.actions?.reloadTheme() }
+                Toggle(L("Show in Dock"), isOn: Binding(get: { model.showInDock }, set: { model.actions?.setShowInDock($0) }))
+                Button(L("Reload theme")) { model.actions?.reloadTheme() }
                 if model.saverInstalled {
-                    Button("Avvia il salvaschermo") { model.actions?.startScreenSaver() }
+                    Button(L("Start screen saver")) { model.actions?.startScreenSaver() }
                 }
                 if model.canCheckForUpdates {
-                    Button("Controlla aggiornamenti…") { model.actions?.checkForUpdates() }
+                    Button(L("Check for updates…")) { model.actions?.checkForUpdates() }
                 }
                 Divider()
                 // Lichen è gratis: chi vuole può sostenerlo (GitHub Sponsors, Ko-fi) dal sito
-                Link("Sostieni Lichen ♥︎", destination: URL(string: "https://namecoder1.github.io/lichen/#support")!)
-                Link("Segnala un problema…", destination: URL(string: "https://github.com/namecoder1/lichen/issues/new/choose")!)
+                Link(L("Support Lichen ♥︎"), destination: URL(string: "https://namecoder1.github.io/lichen/#support")!)
+                Link(L("Report a problem…"), destination: URL(string: "https://github.com/namecoder1/lichen/issues/new/choose")!)
                 Divider()
-                Link("Temi Spiaggia e Prato: Deskland (GPL-3.0)", destination: URL(string: "https://github.com/BLEZZ0102/Deskland")!)
+                Link(L("Beach and Meadow themes: Deskland (GPL-3.0)"), destination: URL(string: "https://github.com/BLEZZ0102/Deskland")!)
                 Divider()
-                Button("Esci da Lichen") { NSApp.terminate(nil) }
+                Button(L("Quit Lichen")) { NSApp.terminate(nil) }
             } label: {
                 Image(systemName: "ellipsis")
                     .font(.system(size: 13, weight: .semibold))

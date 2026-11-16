@@ -23,7 +23,9 @@ There is no test suite: verify with `--snapshot`, `--panel-test`, `--attention` 
   The panel uses Liquid Glass only on macOS 26+.
 - Performance matters: animated themes must respect host fps/scale caps and pause when hidden.
   Re-run `scripts/bench.sh` after shader or quality changes.
-- UI strings are currently Italian; docs, README, changelog, commits and the cask are English.
+- UI strings are English in code, wrapped in `L("...")` (`Shared/L10n.swift`); the Italian translation is
+  `Resources/it.lproj/Localizable.strings`. Add every new UI string there too. Docs, README, changelog,
+  commits and the cask are English.
 - Every user-visible change gets a line under a new `## [X.Y.Z]` section in `CHANGELOG.md`
   (it becomes the release notes).
 - Never commit or read secrets (`*.p12`, Sparkle private key, `.env`). Releases happen only

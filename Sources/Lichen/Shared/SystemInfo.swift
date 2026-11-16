@@ -27,10 +27,10 @@ enum QualityMode: String, CaseIterable, Identifiable {
     var id: String { rawValue }
     var label: String {
         switch self {
-        case .auto: "Automatica"
-        case .high: "Massima"
-        case .balanced: "Bilanciata"
-        case .saver: "Risparmio"
+        case .auto: L("Automatic")
+        case .high: L("Maximum")
+        case .balanced: L("Balanced")
+        case .saver: L("Saver")
         }
     }
 }
@@ -54,24 +54,24 @@ enum QualityPolicy {
         let saver = heavy ? RenderQuality(scale: min(backingScale, 0.75), fps: 20)
                           : RenderQuality(scale: 1, fps: 20)
         switch mode {
-        case .high: return .init(quality: high, pause: false, reason: "Massima")
-        case .balanced: return .init(quality: balanced, pause: false, reason: "Bilanciata")
-        case .saver: return .init(quality: saver, pause: false, reason: "Risparmio")
+        case .high: return .init(quality: high, pause: false, reason: L("Maximum"))
+        case .balanced: return .init(quality: balanced, pause: false, reason: L("Balanced"))
+        case .saver: return .init(quality: saver, pause: false, reason: L("Saver"))
         case .auto: break
         }
         // Automatica: prima la salute del Mac, poi l'alimentazione, poi l'hardware.
         switch SystemInfo.thermal {
-        case .critical: return .init(quality: saver, pause: true, reason: "In pausa: Mac molto caldo")
-        case .serious: return .init(quality: saver, pause: false, reason: "Risparmio: Mac caldo")
+        case .critical: return .init(quality: saver, pause: true, reason: L("Paused: Mac very hot"))
+        case .serious: return .init(quality: saver, pause: false, reason: L("Saver: Mac hot"))
         default: break
         }
-        if SystemInfo.lowPowerMode { return .init(quality: saver, pause: false, reason: "Risparmio energetico") }
+        if SystemInfo.lowPowerMode { return .init(quality: saver, pause: false, reason: L("Low Power Mode")) }
         if SystemInfo.onBattery {
-            return SystemInfo.isIntel ? .init(quality: saver, pause: false, reason: "Risparmio: a batteria")
-                                      : .init(quality: balanced, pause: false, reason: "Bilanciata: a batteria")
+            return SystemInfo.isIntel ? .init(quality: saver, pause: false, reason: L("Saver: on battery"))
+                                      : .init(quality: balanced, pause: false, reason: L("Balanced: on battery"))
         }
-        if SystemInfo.isIntel { return .init(quality: balanced, pause: false, reason: "Bilanciata: Mac Intel") }
-        if heavy { return .init(quality: balanced, pause: false, reason: "Bilanciata: tema animato") }
-        return .init(quality: high, pause: false, reason: "Massima")
+        if SystemInfo.isIntel { return .init(quality: balanced, pause: false, reason: L("Balanced: Intel Mac")) }
+        if heavy { return .init(quality: balanced, pause: false, reason: L("Balanced: animated theme")) }
+        return .init(quality: high, pause: false, reason: L("Maximum"))
     }
 }

@@ -27,20 +27,20 @@ struct ThemeInfo: Identifiable, Hashable {
 
 enum ThemeCatalog {
     static let all: [ThemeInfo] = [
-        .init(id: "beach",     name: "Spiaggia",          page: "deskland/flat.html",     category: .classic, symbol: "beach.umbrella",
-              tagline: "Coste turchesi, kayak e palme", credit: "Deskland"),
-        .init(id: "meadow",    name: "Prato",             page: "deskland/meadow.html",   category: .classic, symbol: "cloud.sun",
-              tagline: "Nuvole, un aquilone e un gattino", credit: "Deskland"),
-        .init(id: "zen",       name: "Giardino zen",      page: "lichen/zen.html",        category: .classic, symbol: "leaf",
-              tagline: "Muschio, rocce e ghiaia rastrellata", credit: nil),
-        .init(id: "reef",      name: "Barriera corallina", page: "lichen/reef.html",      category: .nature,  symbol: "fish",
-              tagline: "Coralli, caustiche e banchi di pesci", credit: nil),
-        .init(id: "pixel",     name: "Pixel RPG",         page: "lichen/pixel.html",      category: .style,   symbol: "gamecontroller",
-              tagline: "Una mappa a 16 bit", credit: nil),
-        .init(id: "topo",      name: "Topografica",       page: "lichen/topo.html",       category: .style,   symbol: "map",
-              tagline: "Curve di livello e tinte altimetriche", credit: nil),
-        .init(id: "blueprint", name: "Blueprint",         page: "lichen/blueprint.html",  category: .style,   symbol: "ruler",
-              tagline: "Carta da progetto e quote tecniche", credit: nil),
+        .init(id: "beach",     name: L("Beach"),            page: "deskland/flat.html",     category: .classic, symbol: "beach.umbrella",
+              tagline: L("Turquoise coasts, kayaks and palms"), credit: "Deskland"),
+        .init(id: "meadow",    name: L("Meadow"),           page: "deskland/meadow.html",   category: .classic, symbol: "cloud.sun",
+              tagline: L("Clouds, a kite and a kitten"), credit: "Deskland"),
+        .init(id: "zen",       name: L("Zen garden"),       page: "lichen/zen.html",        category: .classic, symbol: "leaf",
+              tagline: L("Moss, rocks and raked gravel"), credit: nil),
+        .init(id: "reef",      name: L("Coral reef"), page: "lichen/reef.html",      category: .nature,  symbol: "fish",
+              tagline: L("Corals, caustics and schools of fish"), credit: nil),
+        .init(id: "pixel",     name: L("Pixel RPG"),       page: "lichen/pixel.html",      category: .style,   symbol: "gamecontroller",
+              tagline: L("A 16-bit world map"), credit: nil),
+        .init(id: "topo",      name: L("Topographic"),      page: "lichen/topo.html",       category: .style,   symbol: "map",
+              tagline: L("Contour lines and hypsometric tints"), credit: nil),
+        .init(id: "blueprint", name: L("Blueprint"),       page: "lichen/blueprint.html",  category: .style,   symbol: "ruler",
+              tagline: L("Drafting paper and dimensioned outlines"), credit: nil),
     ]
 
     static func byId(_ id: String?) -> ThemeInfo {
