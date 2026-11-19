@@ -125,6 +125,8 @@
   @media (max-width: 760px) { .controls .note { margin: 0; flex-basis: 100%; } }
 
   /* ---------- sections ---------- */
+  .film { display: block; width: 100%; height: auto; border-radius: clamp(10px, 1.6vw, 18px); background: #000;
+          box-shadow: 0 0 0 1px color-mix(in srgb, var(--ink) 12%, transparent); }
   section { padding: 104px 0 0; }
   h2 { font: 800 clamp(30px, 4.4vw, 46px)/1.08 var(--display); letter-spacing: -0.025em; margin: 0 0 14px; max-width: 18ch; text-wrap: balance; }
   .intro { color: var(--muted); max-width: 38em; margin: 0 0 40px; font-size: 18px; text-wrap: pretty; }
@@ -252,6 +254,15 @@
 </div>
 
 <div class="wrap">
+  <section id="film">
+    <h2 data-en>On a real Mac</h2><h2 data-it>Su un Mac vero</h2>
+    <p class="intro" data-en>Two minutes with all seven themes: icons moving, settings changing, the landscape following.</p>
+    <p class="intro" data-it>Due minuti con tutti e sette i temi: icone che si spostano, regolazioni che cambiano, il paesaggio che segue.</p>
+    <video class="film" controls muted playsinline preload="none" poster="media/tour-poster.jpg" width="1600" height="1039">
+      <source src="media/lichen-tour.mp4" type="video/mp4">
+    </video>
+  </section>
+
   <section id="start">
     <h2 data-en>Up and running in a minute</h2><h2 data-it>Pronto in un minuto</h2>
     <ol class="steps">

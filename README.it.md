@@ -2,7 +2,9 @@
 
 [English](README.md) · **Italiano**
 
-<p align="center"><img src="docs/images/reef.jpg" alt="Lichen, tema Barriera corallina" width="800"></p>
+<p align="center"><img src="docs/images/lichen-demo.gif" alt="Icone spostate in Lichen: le isole le seguono" width="800"></p>
+
+<p align="center"><a href="https://namecoder1.github.io/lichen/"><b>Provalo nel browser</b></a> · <a href="https://namecoder1.github.io/lichen/#film">Guarda il video di 2 minuti</a></p>
 
 Sfondo animato per macOS che fa crescere un paesaggio attorno alle icone del desktop.
 Quando sposti, crei o cancelli un file sulla scrivania, il paesaggio si adatta. Ogni avvio

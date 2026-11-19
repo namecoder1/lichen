@@ -2,7 +2,9 @@
 
 **English** · [Italiano](README.it.md)
 
-<p align="center"><img src="docs/images/reef.jpg" alt="Lichen, Coral reef theme" width="800"></p>
+<p align="center"><img src="docs/images/lichen-demo.gif" alt="Moving desktop icons in Lichen: the islands follow them" width="800"></p>
+
+<p align="center"><a href="https://namecoder1.github.io/lichen/"><b>Try it in your browser</b></a> · <a href="https://namecoder1.github.io/lichen/#film">Watch the 2-minute tour</a></p>
 
 An animated wallpaper for macOS that grows a landscape around your desktop icons.
 Move, create or delete a file on the desktop and the landscape reshapes itself. Every launch
